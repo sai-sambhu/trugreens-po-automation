@@ -8,7 +8,7 @@ Turns a vendor WhatsApp message or invoice (Excel, PDF, Word) into a PosBytz pur
 ## Setup
 
 1. Copy `.env.example` to `.env` and fill in `OPENAI_API_KEY`, `POSBYTZ_EMAIL` and `POSBYTZ_PASSWORD`. `.env` is git-ignored; never commit it.
-2. `python3 -m pip install selenium` (Chrome must be installed).
+2. Install the Python requirements: double-click `install_requirements.command` (or run `python3 -m pip install -r requirements.txt`). Python 3 and Google Chrome must be installed.
 3. Open `convert.html` in Chrome or Edge and choose this folder once.
 
 ## Use
@@ -23,3 +23,5 @@ Turns a vendor WhatsApp message or invoice (Excel, PDF, Word) into a PosBytz pur
 - `src/create_purchase_order.py` – Selenium automation
 - `prompts/` – system prompt and the two item lists (`items_fruits_veggies.txt`, `items_victory.txt`)
 - `run_selenium.command` – double-click launcher
+- `install_requirements.command` – installs the Python requirements
+- `update_code.command` – pulls the latest code from GitHub
