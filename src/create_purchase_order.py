@@ -98,20 +98,30 @@ def normalize_result_text(text):
     return re.sub(r"\s+", "", text)
 
 
-def wait_for_matching_result(driver, expected_text, timeout=15):
-    normalized_expected = re.sub(r"\s+", "", expected_text).casefold()
+def click_matching_result(driver, expected_text, timeout=15):
+    """Click the dropdown result whose text equals `expected_text` (ignoring spaces, case and a leading number).
 
-    def _first_result_matches(d):
+    Every result is checked, not just the first, and results are looked up again on each attempt
+    because the list re-renders while the search runs (holding one element caused stale clicks).
+    """
+    wanted = re.sub(r"\s+", "", expected_text).casefold()
+    options_xpath = (
+        "(//ul[contains(@class, 'select2-results__options')])[last()]"
+        "/li[contains(@class, 'select2-results__option')]"
+    )
+    deadline = time.monotonic() + timeout
+    while True:
         try:
-            element = d.find_element(By.XPATH, SELECT2_FIRST_RESULT_XPATH)
-            text = element.text
-        except Exception:
-            return False
-        if normalize_result_text(text).casefold() == normalized_expected:
-            return element
-        return False
-
-    return WebDriverWait(driver, timeout).until(_first_result_matches)
+            for option in driver.find_elements(By.XPATH, options_xpath):
+                text = option.get_attribute("textContent") or ""
+                if normalize_result_text(text).casefold() == wanted:
+                    safe_click(driver, option)
+                    return
+        except StaleElementReferenceException:
+            pass
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f"'{expected_text}' did not appear in the dropdown results.")
+        time.sleep(0.3)
 
 
 def safe_click(driver, element, timeout=5):
@@ -211,8 +221,7 @@ def main():
     vendor_search_input = wait.until(EC.visibility_of_element_located((By.XPATH, SELECT2_SEARCH_INPUT_XPATH)))
     vendor_search_input.send_keys(vendor_search_term)
 
-    vendor_first_result = wait_for_matching_result(driver, vendor_search_term)
-    safe_click(driver, vendor_first_result)
+    click_matching_result(driver, vendor_search_term)
 
     ship_to_toggle = wait.until(EC.element_to_be_clickable((By.XPATH, SHIP_TO_DROPDOWN_TOGGLE_XPATH)))
     safe_click(driver, ship_to_toggle)
@@ -222,8 +231,7 @@ def main():
     ship_to_search_input = wait.until(EC.visibility_of_element_located((By.XPATH, SELECT2_SEARCH_INPUT_XPATH)))
     ship_to_search_input.send_keys(SHIP_TO_SEARCH_TERM)
 
-    ship_to_first_result = wait_for_matching_result(driver, SHIP_TO_SEARCH_TERM)
-    safe_click(driver, ship_to_first_result)
+    click_matching_result(driver, SHIP_TO_SEARCH_TERM)
 
     delivery_date = datetime.strptime(purchase_order["delivery_date"], "%Y-%m-%d")
 
@@ -253,8 +261,7 @@ def main():
     # category_search_input = wait.until(EC.visibility_of_element_located((By.XPATH, SELECT2_SEARCH_INPUT_XPATH)))
     # category_search_input.send_keys(CATEGORY_SEARCH_TERM)
     #
-    # category_first_result = wait_for_matching_result(driver, CATEGORY_SEARCH_TERM)
-    # safe_click(driver, category_first_result)
+    # click_matching_result(driver, CATEGORY_SEARCH_TERM)
 
     add_item_button = wait.until(EC.element_to_be_clickable((By.XPATH, ADD_ITEM_BUTTON_XPATH)))
     safe_click(driver, add_item_button)
