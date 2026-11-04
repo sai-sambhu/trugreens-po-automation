@@ -23,3 +23,6 @@ prompts/items.txt
 
 # failure screenshots from Selenium
 debug/
+
+# local backup of the item list
+prompts/*.backup.txt

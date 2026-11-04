@@ -1,9 +1,9 @@
 You will be given two things in this conversation:
 
-1. items.txt — tab-separated "Variation Name" and "Sku" columns. The authoritative, exact item list from the backend, covering two categories mixed into one file with unique SKUs across both: produce (Fnv) and Victory Bazars grocery/kirana.
+1. items.txt — tab-separated "Variation Name" and "Sku" columns. The authoritative, exact item list from the backend. Only ONE list is given per request, chosen by the user: fruits, veggies & leafy greens (produce), or Victory Bazars grocery/kirana. SKUs are unique.
 2. A vendor procurement record, in ONE of two forms:
-   - A free-text WhatsApp-style message (vendor: Kanchana Vegetables / Kanchana Fruits / Manoj) — may contain multiple delivery_date+vendor blocks in one paste.
-   - A Victory Bazars tax invoice, attached as a file (Excel or PDF), read directly from its line-item table (Description of Goods, Quantity, Rate, per (unit), Amount) plus invoice date and Total line. The letterhead ("Victory Bazars Private Limited") confirms vendor = "Victory". One invoice = one delivery_date+vendor block.
+   - A free-text WhatsApp-style message (vendor: Kanchana Vegetables / Kanchana Fruits / Manoj) — may contain multiple delivery_date+vendor blocks in one paste. It can also arrive as an attached image (screenshot or photo): read the text in the image exactly as if it had been typed.
+   - A Victory Bazars tax invoice, attached as a file (Excel, PDF or image), read directly from its line-item table (Description of Goods, Quantity, Rate, per (unit), Amount) plus invoice date and Total line. The letterhead ("Victory Bazars Private Limited") confirms vendor = "Victory". One invoice = one delivery_date+vendor block.
      The invoice's footer has SEVERAL numbers close together — do not confuse them: a taxable-value subtotal (sum of all line Amounts), an IGST line, a "Less: Round Off" line (a tiny number, often negative, e.g. "-0.01" — this is NOT the total), and finally the actual "Total" line (subtotal + IGST + round off — the largest number, e.g. "54680"). "stated_total" is that final "Total" line specifically, never the round-off line and never the subtotal.
 
 Convert the input into a JSON array, one object per delivery_date+vendor block, per the schema and rules below. Output ONLY the JSON — no code fences, no commentary, nothing before or after.
@@ -37,7 +37,7 @@ ITEM MATCHING
     - Only fall back to a plain unprefixed "X" (or a different company's variant) when items.txt has no version prefixed with the current invoice's own vendor name for that product.
   Always match the current invoice's own vendor prefix first — never a competing company's, and never settle for an unprefixed generic entry when a same-vendor-prefixed one exists. Also check for bulk "...Kg" naming (e.g. bare "Toor Dal" -> "Victory Toor Dal Kg") and minor spelling drift within the same brand (e.g. "Wheat Ravva" -> "Victory Wheet Ravva 500Gm") before giving up.
 - LOOSE/BULK ITEMS MATCHING A PACKAGED-SOUNDING NAME: don't reject an items.txt entry just because its name implies a fixed package size (e.g. "Victory Ground Nuts 1 Kg") when the invoice line is actually sold loose/bulk by weight (e.g. "Groundnuts", 25 kg, invoice's own "per" column says "Kgs" not "Pcs"/"Pac"). The "1 Kg" in the catalog name is just how that SKU is labeled — it does not mean the quantity must literally be 1. Use that SKU, record the invoice's own quantity (e.g. 25) and unit "kg" (matching the invoice's own per-column when it says Kgs), not "pc". This is still a brand-prefix match, just paired with a weight-based quantity instead of a piece count.
-- METHI RULE: line contains "small" (any form) -> "Small Methi" (sku 98). Otherwise plain "Methi"/"Menthi" -> "Methi / Menthi - Small" (sku 89).
+- METHI RULE (check in this order): line contains "big" (any form) -> "Methi / Menthi - Big" (sku 1563). Else line contains "small" (any form, e.g. "small methi") -> "Microgreens Methi" (sku 98; "Microgreens" is only the brand name in PosBytz, vendors just say "small methi"). Otherwise plain "Methi"/"Menthi" with no size -> "Methi / Menthi - Small" (sku 89).
 - REQUIRED CHECKLIST BEFORE ANYTHING GOES TO "unmatched_items": a line only belongs there after ALL of these have been tried and genuinely failed — do not skip straight to unmatched because nothing obvious jumped out on a first read.
     1. On a Victory invoice: "Victory " + the line's name, looked up in items.txt (the mandatory first step above). On a non-Victory invoice: exact string match against items.txt.
     2. Known shorthand/typo/synonym table (see examples above) and the METHI rule.
@@ -53,30 +53,51 @@ ITEM MATCHING
 ===========================================================
 UNIT HANDLING
 ===========================================================
-THIS SECTION IS FOR PRODUCE/Fnv ITEMS ONLY. Victory/Kirana items are handled separately below — do not apply the produce default to them.
+The unit of every item is fixed by the backend (DB). Take it from the item list — never from the item's name, and never from what sounds natural in everyday English.
 
-Produce/Fnv default: "1 Pc"/"1 Box" in the items.txt name -> backend unit "pc"; no such marker -> backend unit "kg" — EXCEPT items in the KNOWN PIECE-BASED table below, which are "pc" despite no marker. Check that table before falling back to the default.
+1. Item list WITH a third column "Count or Weight" (veggies/leafy lists): Count -> backend unit "pc"; Weight -> backend unit "kg". This column is the ONLY source of truth. Ignore any "1 Pc", "1 Kg", "250g" etc. written inside the item name.
+2. Item list WITHOUT that column and NOT Victory (fruits, until the column is added): "1 Pc"/"1 Box" in the name -> "pc"; otherwise "kg". Imported Avacado is "pc".
+3. Victory/Kirana list: every Victory item is "pc", always. There are no weights. Use the invoice's own quantity as-is with unit "pc", even when the invoice's "per" column says Kgs or the item name contains a weight ("Sugar Chips 100 Gm", "Rice 1 Kg" — that is the pack size, not a unit). Never convert Victory quantities.
 
-A FRACTIONAL/DECIMAL QUANTITY (e.g. "25.5 kg", "22.5 kg") IS COMPLETELY NORMAL FOR WEIGHT-BASED PRODUCE — it is not a sign that an item is actually piece-based, and never a reason to invent a piece conversion. Weighed produce routinely comes out as a decimal on a scale (25.5 kg of carrots, 22.5 kg of okra); this is expected, ordinary data, not something to "fix."
+A fractional/decimal quantity (e.g. "25.5 kg") is completely normal for Weight items and is never a reason to invent a piece conversion.
 
-DON'T LET AN ITEM'S ENGLISH NAME BIAS THE UNIT DECISION: "Ladys Finger / Bendakaya" (okra) has no "1 Pc" marker and is NOT in the piece-based table below — it is weight-based, full stop, exactly like Carrot or Onion. Do not let the word "Finger" in its name suggest it should be piece-counted just because a finger is a discrete, countable thing in everyday English — the backend_unit determination is entirely about the items.txt marker (or the confirmed tables below), never about what an item's name sounds like it should be.
+PIECES ARE ALWAYS WHOLE NUMBERS: a quantity in "pc" must never have decimals. If a conversion gives a fraction of a piece (2.5 kg of Spring Onion = 17.5 pc), round to the nearest whole piece (0.5 rounds up), keep the line's money unchanged, set buying_price_per_unit = line_total / final quantity, and mention the rounding in "warnings". Weight quantities in kg may have decimals.
 
-KNOWN PIECE-BASED ITEMS WITHOUT AN EXPLICIT MARKER (add confirmed cases below):
-- Imported Avacado — tracked by count in the DB, not weight (confirmed by user).
-- Methi / Menthi - Small, Small Methi, kothimeera / Coriander, Thotakura / Amaranthus, Pudina / Mint, Chukkakura, Ponaganti, Gongura / Sorrel Leaves, spring onion, Bachali — bought and counted in PIECES directly by the vendor (backend unit "pc"), confirmed across multiple vendor messages, despite no "1 Pc" marker in items.txt. Unlike Curry leaves (below), these are NOT bought as one bunch that gets split into priced sub-units — there is no bunch-to-piece derivation for these at all. The message's own piece count IS the quantity, used as-is.
+When the unit written in the message differs from the item's backend unit (for example "4kg" for a Count item, or "10 pc" for a Weight item), resolve it like this:
+a. If THIS EXACT item is in MANUAL CONVERSION OVERRIDES below (never reuse one item's factor for another item, not even a similar one) -> convert with that factor, record the converted quantity and the backend unit, add a "unit_mismatches" entry with "conversion_source": "manual_override". This covers kg <-> pieces ("1 kg = 25 pc") and container units written in the message such as box, bag or gala ("1 box = 23 kg": 2 boxes of Tomatoes = 46 kg).
+b. If there is NO conversion rule for it -> do NOT estimate, guess or invent a factor, and NEVER just re-label the number: "5kg" of a Count item is NOT "5 pc", and "6pc" of a Weight item is NOT "6 kg". The "unit" you output must be the item's backend unit AND the quantity must really be in that unit; if you cannot get there with a rule above, the line goes to "unmatched_items" instead of "items". Put the line in "unmatched_items" with its line_total and a reason such as: "Unit mismatch: <item> is Count (pc) in the DB but the message gave kg, and there is no conversion rule for it." The user will then fix the message or add a rule. Leave "new_outliers_detected" empty.
+If the message unit already equals the backend unit, record it as-is; do NOT apply an override just because the item is listed there (Lemon has an override, but a message already giving pc needs no conversion).
 
-LEAFY GREENS/HERBS — DO NOT FABRICATE A pc/kg RATIO: unlike a lemon or coconut (a whole piece with a real, fairly consistent average weight), one piece of a leafy green/herb has no reliable fixed weight — pieces vary too much for any pc/kg estimate to mean anything. If a message reports one of these (or a leafy green/herb not yet in the table above) in "pc", do NOT invent a conversion factor and force it into kg. Trust the message's reported pc count directly (no unit_mismatches entry needed — this isn't a real mismatch), and if it's a new herb not in the table above, still record it as pc as reported, then add it to the table above for next time. This applies specifically to leafy greens/herbs; it does not extend to whole-piece produce (fruits, tubers, etc.), which the general "estimate a conversion factor" mismatch-handling still applies to normally. Note the ONE exception is Curry leaves / Karvepaku (see QUANTITY DERIVATION below), which is genuinely bought as a single bunch and split into smaller priced units at a fixed rate — that is a different, deliberately separate mechanism from this rule and does not apply to any of the other herbs listed above.
-
-VICTORY/KIRANA ITEMS — DIFFERENT DEFAULT, "pc" NOT "kg": Kirana items.txt entries never carry a "1 Pc" marker (none of them are named that way), so the produce default above would wrongly classify every single one as weight-based. It does NOT apply to them. Instead: Kirana items default to backend unit "pc" (one package/unit = 1 pc), full stop. A weight embedded in the item's own name (e.g. "Sugar Chips 100 Gm", "Rice (Victory) 1 Kg") describes the PACKAGE SIZE printed on that product, not an instruction to track it by weight — do not use that number to "convert" the invoice's piece count into kg. Trust the invoice's own "per" column: when it says "Pcs"/"Pac", record unit "pc" with the invoice's own quantity, with NO conversion and NO unit_mismatches entry — that is not a mismatch, it's already correct. Only treat a Kirana line as kg-based when the invoice's OWN "per" column literally says "Kgs" (a handful of genuinely bulk/loose items, e.g. bare "Groundnuts", bare "Toor Dal") — for those, use unit "kg" with the invoice's stated quantity directly, again with no invented conversion factor. If you find yourself estimating a "kg per package" conversion factor for a Kirana item, stop — that is the exact mistake this paragraph exists to prevent.
-
-Mismatch check, per line: backend "pc" but message gives kg -> mismatch (kg->pc). Backend "kg" but message clearly gives a discrete piece count, not weight -> mismatch (pc->kg). On mismatch, resolve in order:
-1. MANUAL OVERRIDE TABLE (below) has this item -> convert with that factor, "conversion_source": "manual_override".
-2. No override -> estimate a reasonable factor from general produce-weight knowledge (e.g. "medium lemon ~70-115g -> ~9-13/kg"), convert, "conversion_source": "estimated", and ALSO add it to "new_outliers_detected" so the user can promote it to a confirmed override.
-Record the FINAL quantity/unit as the converted value always — "unit_mismatches" preserves the original wording for traceability. If units already agree, record as-is; do NOT apply an override just because the item is listed there — only an actual mismatch triggers it (e.g. Lemon has an override, but a message already reporting it in pc needs no conversion).
-
-MANUAL CONVERSION OVERRIDES (edit over time):
+MANUAL CONVERSION OVERRIDES (edit over time). Use a line ONLY when the message unit differs from the item's backend unit; if the message already gives the backend unit (e.g. lemons in pieces), take it as-is and apply nothing. Line format: "- <exact item name> : <A> kg = <B> pc" or "- <exact item name> : <A> box|bag|gala = <B> pc|kg" (A units give B; so "7.8 kg = 10 pc" means 1 pc = 0.78 kg).
 - Lemon 1 Pc : 1 kg = 25 pc (user's actual vendor lemons; smaller than typical medium)
 - Drumstick 1 Pc : 1 kg = 15 pc
+- Spring Onion / Ulli Kadalu : 1 kg = 7 pc
+- Cauliflower 1 Pc : 1 bag = 10 pc
+- Cauliflower 1 Pc : 7.8 kg = 10 pc (a bag of 10 pc weighs 7.8 kg)
+- Raw Banana / Pachi Arati 1 Pc - Big : 1 gala = 45 pc
+- Raw Banana / Pachi Arati 1 Pc - Small : 1 gala = 55 pc
+- Raw Banana / Pachi Arati 1 Pc - Big : 2 gala (no size given, half of each gala) = 45 pc
+- Raw Banana / Pachi Arati 1 Pc - Small : 2 gala (no size given, half of each gala) = 55 pc
+- Tomatoes : 1 box = 23 kg
+
+RAW BANANA GALA RULE: a Big gala is 45 pc and a Small gala is 55 pc. If the message says Big or Small, the WHOLE gala goes to that size (e.g. 2 Small galas = 110 pc of Small). If the message gives Raw Banana by the gala with NO size, split every gala half Big and half Small (50 pc per gala in total) into TWO items, "Raw Banana / Pachi Arati 1 Pc - Big" and "Raw Banana / Pachi Arati 1 Pc - Small", using whole pieces only: with N galas, Big = half of (N x 45) rounded UP, Small = (N x 50) minus Big, so the total stays exactly 50 per gala (use the lookup table below: 1 gala = 23 Big + 27 Small, 2 galas = 45 Big + 55 Small, 3 galas = 68 Big + 82 Small). Each item gets half of the line's money (e.g. a 1000 rs line gives line_total 500 to each of the two items; buying_price_per_unit is that line_total divided by that item's quantity, written as a number such as 21.74). Use the same message_text on both and add a warning "Raw Banana gala split half Big / half Small". If the message gives Raw Banana in plain PIECES with no size and no gala (e.g. "Raw Banana 55 pieces"), split the pieces half and half into the same TWO items: Big = P / 2 rounded UP to a whole number, Small = P minus Big (so the total stays exactly P), each item gets half of the line's money. If it gives plain kg (or anything else) with no size, do not guess a size: put the line in "unmatched_items" as ambiguous between Big and Small.
+
+WORKED CONVERSION EXAMPLES (follow these exactly):
+- "Lemon-1.5kg-200rs" (Lemon is pc, 25 pc per kg): 1.5 x 25 = 37.5, rounded to a whole piece = 38 pc. One item: quantity 38, unit "pc", line_total 200, buying_price_per_unit 5.26.
+- "Cauliflower-3kg-240rs" (Cauliflower is pc, 7.8 kg = 10 pc): 3 kg is about 4 pc (3 x 10 / 7.8 rounded to a whole piece). One item: quantity 4, unit "pc", line_total 240, buying_price_per_unit 60. (Do NOT use the bag figure for kg.)
+- "Cauliflower-2 bags-400rs": 2 bags x 10 = 20 pc. One item: quantity 20, unit "pc", line_total 400, buying_price_per_unit 20.
+- "Spring Onion-2.5kg-125rs": 2.5 x 7 = 17.5, rounded up = 18 pc. One item: quantity 18, line_total 125, buying_price_per_unit 6.94.
+- "Tomato-2 box-1500rs": 2 x 23 = 46 kg. One item: quantity 46, unit "kg", line_total 1500, buying_price_per_unit 32.61.
+- "Raw Banana Small-2 gala-1400rs": 2 x 55 = 110 pc. One item "Raw Banana / Pachi Arati 1 Pc - Small": quantity 110, line_total 1400, buying_price_per_unit 12.73.
+- "Raw Banana-1 gala-1000rs" (no size) -> TWO items, both from the same message line:
+    1) "Raw Banana / Pachi Arati 1 Pc - Big": quantity 23, unit "pc", line_total 500, buying_price_per_unit 21.74
+    2) "Raw Banana / Pachi Arati 1 Pc - Small": quantity 27, unit "pc", line_total 500, buying_price_per_unit 18.52
+- "Raw Banana-3 gala-3000rs" (no size) -> TWO items: Big quantity 68 (half of 135 rounded up), line_total 1500, buying_price_per_unit 22.06; Small quantity 82 (150 - 68), line_total 1500, buying_price_per_unit 18.29.
+- "Raw Banana-55pc-1000rs" (pieces, no size) -> TWO items: Big quantity 28 (half of 55 rounded up), line_total 500, buying_price_per_unit 17.86; Small quantity 27 (55 - 28), line_total 500, buying_price_per_unit 18.52. "Raw Banana-40pc-800rs" -> Big 20 (line_total 400, price 20) + Small 20 (line_total 400, price 20).
+- RAW BANANA NO-SIZE GALA LOOKUP (do NOT calculate, copy the pair for the number of galas N; each of the two items gets half of the line money):
+    N=1: Big 23 + Small 27 | N=2: Big 45 + Small 55 | N=3: Big 68 + Small 82 | N=4: Big 90 + Small 110 | N=5: Big 113 + Small 137
+    N=6: Big 135 + Small 165 | N=7: Big 158 + Small 192 | N=8: Big 180 + Small 220 | N=9: Big 203 + Small 247 | N=10: Big 225 + Small 275
+    (above 10: Big = half of (N x 45) rounded up, Small = (N x 50) minus Big). Example: "Raw Banana-5 gala-5000rs" -> Big 113 pc with line_total 2500 (price 22.12) AND Small 137 pc with line_total 2500 (price 18.25).
 
 ===========================================================
 QUANTITY DERIVATION — when the line doesn't give a usable quantity directly
@@ -170,4 +191,6 @@ Then compare the two. A gap is often EXPECTED, not an error: "stated_total" (a m
 ===========================================================
 REMEMBER
 ===========================================================
+Every numeric field must be a final plain number you have already calculated (e.g. 40, or 38.89) — never a formula or expression such as 900/22.5, because a formula makes the JSON invalid. Round buying_price_per_unit to 2 decimals.
+
 Output ONLY the JSON array. If items.txt gets new items later, re-run this same prompt with the updated file — every rule above still applies unchanged.

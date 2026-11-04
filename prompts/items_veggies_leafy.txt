@@ -1,0 +1,118 @@
+Variation Name	Sku	Count or Weight
+dilpasand	1245741	Count
+Sara Brinjal/ Sara Vankaya	1245544	Weight
+White Onion	1245521	Weight
+Sambar Onion	1245417	Count
+Garlic Peeled	1245413	Weight
+Kandi Kayalu	1628	Weight
+Thegalu 1 pc.	1627	Count
+Thega	1626	Weight
+Sago	1625	Weight
+Raw Banana / Pachi Arati 1 Pc - Big	1564	Count
+Ooty Carrot / Gajraj Carrot	76	Weight
+Ash Gourd / Boodida Gummadikaya	46	Weight
+cherry tomato 250g	900104	Count
+Tomatoes	1	Weight
+Karra Pendalam	144	Weight
+Dabbakaya	145	Count
+Disco Pumkin	143	Weight
+Baby Snake Guard	184	Weight
+Vakkaya	142	Weight
+Round Bottle Guard	83	Weight
+Raw Groundnuts / Pacchi Palli	56	Weight
+Banana Stem	82	Count
+Mango Ginger	21	Weight
+Baby Potato 500gms	80	Count
+Turmeric / Pachi Pasupu Kommu	79	Weight
+White Chilli	1419	Weight
+Panasapattu	321321378	Weight
+Jack Fruit	126	Weight
+Baby Corn 1 Pc	77	Count
+Neeti Beera	18	Weight
+Sambar Onion 1Pc / 500gms	71	Count
+Broccoli	69	Weight
+White Onion	70	Weight
+Chintakayalu	58	Weight
+Zucchini Yellow	68	Weight
+Zucchini Green	67	Weight
+Banana Flower 1 Pc	52	Count
+Badhrachalam Chikkudu	39	Weight
+Mushrooms 1 Pc	57	Count
+Aa Kakarakaya	33	Weight
+Purple Brinjal	12	Weight
+Snake Gourd / Potlakaya 1 Pc	43	Count
+Noolkol	47	Weight
+Natu Brinjal	13	Weight
+Natu Aakakara	32	Weight
+Parval / Pointed gourd	29	Weight
+Brinjal Barta White	15	Weight
+Dosakaya / Yellow Cucumber	34	Weight
+Kanda / Yam Slice	63	Weight
+Cluster Beans / Goru Chikkudu	38	Weight
+Dark Green Chilli / Black Mirchi	5	Weight
+Green Mirchi / Green Chilli	4	Weight
+Chow Chow	59	Weight
+Sweet Corn 1 Pc	50	Count
+English Keera / English Cucumber	42	Weight
+Chikkudu / Beans Broad 	36	Weight
+Grees Peas	37	Weight
+Dondakaya	30	Weight
+Bajji Mirchi	6	Weight
+Lobia	40	Weight
+Amla / Usiri	55	Weight
+Red Chilli / Pandu Mirchi	7	Weight
+Garlic	23	Weight
+Capsicum	64	Weight
+Cabbage 	27	Weight
+Local Keera / Local Cucumber	41	Weight
+Kakarakaya / Bitter Gourd	31	Weight
+Raw Banana / Pachi Arati 1 Pc - Small	53	Count
+Beetroot	20	Weight
+Ridge Gourd / Beerakaya	17	Weight
+Brinjal Barta Purple / Purple Eggplant 	14	Weight
+Lemon 1 Pc	24	Count
+Ginger	22	Weight
+Haricot Beans / French Beans 	35	Weight
+Long Brinjal Pennadi / Podugu Vankaya	11	Weight
+Raw Mango / Pacchi Mamidi	54	Weight
+Carrot	19	Weight
+Raddish / Mullangi 1 Pc	60	Count
+Cauliflower 1 Pc	26	Count
+Chamadumpa / colocasia	62	Weight
+Sweet Potato / Chilagadadumpa	61	Weight
+Drumstick 1 Pc	25	Count
+onion	2	Weight
+Black Brinjal / Nalla Vankaya	9	Weight
+Bottle Guard / Sorakaya 1 Pc	16	Count
+Green Pumkin  / Gummadikaya	44	Weight
+Green Brinjal / Green Vankaya	10	Weight
+Ladys Finger / Bendakaya	8	Weight
+Yellow Pumkin / Gummadikaya	45	Weight
+Potato	3	Weight
+Coconut / Kobbarikaya 1 Pc	49	Count
+
+Tella Galijeru	1245543	Count
+Aava Kura / Mustard Leaf - Small	1245391	Count
+Sanaga Aaku	1245356	Count
+Methi / Menthi - Big	1563	Count
+Aava Kura / Mustard Leaf - Medium	1562	Count
+Aava Kura / Mustard Leaf - Big	1561	Count
+Bathua	1560	Count
+Spinach / Palakura	95	Count
+Soy Koora / Dil Leaf	183	Count
+Chintachiguru 1 Kg	99	Weight
+Drumstick Leaf / Moringa / Munagaku 1 Pc	84	Count
+Neem Leafs	199	Count
+Microgreens Methi	98	Count
+Bachali	96	Count
+Ponaganti	97	Count
+Red Thotakura / Red Amaranthus	93	Count
+Curry leaves / Karvepaku	92	Count
+Pudina / Mint 	86	Count
+Gongura / Sorrel Leaves	85	Count
+kothimeera / Coriander	90	Count
+Chukkakura	91	Count
+Thotakura / Amaranthus	88	Count
+Spring Onion / Ulli Kadalu	94	Count
+Methi / Menthi - Small	89	Count
+Gangavalli	87	Count

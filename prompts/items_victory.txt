@@ -79,12 +79,16 @@ Victory Ground Nuts (Sp) 500 Gm	1024702
 Ground Nuts (Sp) 900 Gm	1052698
 Victory Parched Gram Dal 200Gm	1045276
 Victory Parched Gram Dal 500Gm	1045275
+Victory Tamarind (Kaada) 500 Gm	1024997
+Victory Tamarind (S.P) 200 Gm	1024793
+Victory Tamarind (S.P) 500 Gm	1024792
 Victory Toor Dal Kg	1024656
 Victory Red Dal 500Gm	1024720
 360 Life RAGI FLOUR 500g	936
 Victory Idly Ravva Kg	1024811
 Kunkullu 500 Gm	1024824
 Victory Red Ravva 500Gm	1024773
+Red Ravva(Prasadm Nuka) 1Kg	1245613
 Bansi Ravva 500Gm	1024781
 Quinova Rice 500 Gm	1245295
 Victory Wheat Kg	1024717

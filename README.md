@@ -1,6 +1,6 @@
 # trugreens-po-automation
 
-Turns a vendor WhatsApp message or invoice (Excel, PDF, Word) into a PosBytz purchase order.
+Turns a vendor WhatsApp message or invoice (Excel, PDF, Word or an image) into a PosBytz purchase order.
 
 1. `convert.html` sends your message and/or attachments to the OpenAI API, checks the JSON it gets back, and saves `purchase_orders.json` only when there are no blocking issues.
 2. `run_selenium` (in `commands/mac` or `commands/windows`) opens PosBytz in Chrome and fills the purchase order from that JSON.
@@ -80,14 +80,15 @@ On macOS, the first time you open a `.command` file, right-click it and choose O
 
 ## Use
 
-1. Pick the item list (**Fruits & veggies** or **Victory**).
-2. Paste a message and/or attach files (Excel, PDF, Word `.docx`). At least one is required.
+1. Pick the item list: **Fruits**, **Veggies & leafy** or **Victory**. Only the list you pick is sent to the AI.
+2. Paste a message and/or attach files (Excel, PDF, Word `.docx`, or images: jpg, jpeg, png, webp). You can also copy a file or image and paste it with Cmd/Ctrl + V: a PDF or Excel copied in Finder/Explorer, a WhatsApp image, or a screenshot (on a Mac, Cmd + Ctrl + Shift + 4 copies a screenshot area). At least one message or file is required.
 3. Click **Convert & validate**.
 4. Fix anything shown in red and convert again. Red means the result is blocked and nothing is saved:
    - unmatched items
    - unit mismatches
    - a SKU that isn't in the item list
    - a missing vendor or date
+   - a wrong unit: each item's unit comes from the list (Count = pc, Weight = kg). If a message uses the other unit, it is converted only for items in the prompt's "MANUAL CONVERSION OVERRIDES" table (and the maths is checked). Anything else is an error.
    - more than one order in a single run (Selenium only enters the first)
 
    Amber warnings (total mismatch, name differences, estimated conversions, model warnings) don't block.
@@ -106,7 +107,8 @@ convert.html                       the UI
 src/create_purchase_order.py       Selenium automation
 prompts/
   message_to_json_prompt.txt       system prompt sent to the AI
-  items_fruits_veggies.txt         item list: fruits and veggies
+  items_fruits.txt                 item list: fruits
+  items_veggies_leafy.txt          item list: veggies and leafy greens (columns: Variation Name, Sku, Count or Weight)
   items_victory.txt                item list: Victory / kirana
   chatgpt_promt.txt                short instruction for the ChatGPT website (not used by the page)
 commands/

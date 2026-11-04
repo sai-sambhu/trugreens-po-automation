@@ -1,0 +1,36 @@
+Variation Name	Sku
+Alponso Mango	176
+Any Apple	1245522
+Baby Apple	1492
+Banganapalle Mango	171
+Blueberry 1 Box	109
+Cherry	1416
+Cheruku Rasalu Mango	174
+Daseri Mango	172
+Date Fruit	8002
+Green Apple	156
+Guava / Jama	113
+Himayat Mango	1245580
+Imported Avacado	108
+Imported Kiwi - Box of 3	1473
+Imported Oranges / Malta	103
+Jamoon / Neredukaya	160
+Karpuram Banana	119
+Local Banana	117
+Mandarin Orange	101
+Mango Kesari	1245588
+Mosambi	104
+Musk Melon / Karbuja	122
+Papaya	120
+Pears	124
+Pineapple Small 1 Pc	121
+Plums / Albakara	127
+Pomogranate	106
+Red Dragon Fruit 1 Pc	110
+Royal gala	151
+Sapota	105
+Special Banganapalle Mango	165
+Thai Guava	112
+Turkey  Apple	155
+Water Melon	116
+White Dragon Fruit 1 Pc	132

@@ -83,7 +83,28 @@
   .drop strong { font-size: 14.5px; }
   .drop svg { width: 26px; height: 26px; color: var(--accent); margin-bottom: 4px; }
   #filesInfo { color: var(--muted); font-size: 13px; word-break: break-word; }
-  #filesClear { margin-top: 8px; }
+  .fl { display: grid; gap: 6px; margin-top: 8px; }
+  .fl:empty { display: none; }
+  .fchip { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 1px solid var(--line);
+    border-radius: 9px; background: var(--surface-2); font-size: 13px; }
+  .fchip img, .fchip .ext { width: 36px; height: 36px; border-radius: 6px; flex: none; }
+  .fchip img { object-fit: cover; }
+  .fchip .ext { background: var(--accent-soft); color: var(--accent); display: grid; place-items: center;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; }
+  .fchip .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fchip button { padding: 0 9px; border-radius: 6px; line-height: 1.5; font-size: 16px; }
+  .tip { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+  .fchip.clickable { cursor: pointer; }
+  .fchip.clickable:hover { border-color: var(--accent); }
+  .fchip.clickable .nm::after { content: "  · click to view"; color: var(--muted); font-size: 12px; }
+  .modalbg { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: grid; place-items: center; z-index: 50; padding: 20px; }
+  .modalbox { background: var(--surface); border-radius: 12px; width: min(960px, 100%); height: min(88vh, 100%);
+    display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow); }
+  .modalbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .modalbar strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .modalbody { flex: 1; min-height: 0; overflow: auto; display: grid; place-items: center; background: var(--surface-2); }
+  .modalbody img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .modalbody iframe { width: 100%; height: 100%; border: 0; }
 
   /* buttons */
   button { font: inherit; font-size: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text);
@@ -165,7 +186,8 @@
     <div class="field">
       <span class="lbl">Item list sent to the AI</span>
       <div class="seg">
-        <label><input type="radio" name="list" id="tickProduce" checked><span>Fruits &amp; veggies</span></label>
+        <label><input type="radio" name="list" id="tickFruits"><span>Fruits</span></label>
+        <label><input type="radio" name="list" id="tickVeg" checked><span>Veggies &amp; leafy</span></label>
         <label><input type="radio" name="list" id="tickVictory"><span>Victory</span></label>
       </div>
     </div>
@@ -178,12 +200,13 @@
       <div class="field">
         <span class="lbl">Attachments</span>
         <label class="drop" id="drop">
-          <input type="file" id="files" multiple accept=".xlsx,.xls,.csv,.pdf,.docx">
+          <input type="file" id="files" multiple accept=".xlsx,.xls,.csv,.pdf,.docx,.jpg,.jpeg,.png,.webp,image/*">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
           <strong>Drop files or click to browse</strong>
-          <span id="filesInfo">Excel, PDF or Word (.docx)</span>
+          <span id="filesInfo">Excel, PDF, Word or image</span>
         </label>
-        <button id="filesClear" class="small hidden">Remove files</button>
+        <div id="fileList" class="fl"></div>
+        <div class="tip">You can also copy a file or image and paste it here (Cmd/Ctrl + V): a PDF or Excel from Finder/Explorer, a WhatsApp image, or a screenshot.</div>
       </div>
     </div>
 
@@ -217,6 +240,13 @@
   </section>
 </main>
 
+<div id="preview" class="modalbg hidden">
+  <div class="modalbox">
+    <div class="modalbar"><strong id="previewName"></strong><button id="previewClose">Close</button></div>
+    <div class="modalbody" id="previewBody"></div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -224,7 +254,8 @@
 const FILES = {
   env: [".env"],
   prompt: ["prompts", "message_to_json_prompt.txt"],
-  produce: ["prompts", "items_fruits_veggies.txt"],
+  fruits: ["prompts", "items_fruits.txt"],
+  veggies: ["prompts", "items_veggies_leafy.txt"],
   victory: ["prompts", "items_victory.txt"],
 };
 const OUTPUT = "purchase_orders.json";
@@ -233,6 +264,7 @@ const API_URL = "https://api.openai.com/v1/chat/completions";
 const $ = (id) => document.getElementById(id);
 
 let dir = null;
+let attachments = [];
 
 /* ---------- remembered folder (IndexedDB) ---------- */
 function idb() {
@@ -279,7 +311,7 @@ function setFolder(handle, granted) {
   updateButton();
 }
 function updateButton() {
-  const hasInput = $("message").value.trim() || $("files").files.length;
+  const hasInput = $("message").value.trim() || attachments.length;
   $("convertBtn").disabled = !dir || !hasInput;
 }
 
@@ -334,12 +366,14 @@ function parseEnv(text) {
   }
   return env;
 }
+// Rows are: Variation Name <tab> Sku [<tab> Count or Weight]. Count -> "pc", Weight -> "kg".
 function loadCatalog(itemsText) {
   const catalog = {};
   itemsText.split(/\r?\n/).slice(1).forEach((line) => {
-    const i = line.lastIndexOf("\t");
-    if (i < 0) return;
-    catalog[line.slice(i + 1).trim()] = line.slice(0, i).trim();
+    const parts = line.split("\t");
+    if (parts.length < 2) return;
+    const kind = (parts[2] || "").trim().toLowerCase();
+    catalog[parts[1].trim()] = { name: parts[0].trim(), unit: kind === "count" ? "pc" : kind === "weight" ? "kg" : "" };
   });
   return catalog;
 }
@@ -361,7 +395,14 @@ function todayISO() {
   return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
 }
 function parseJsonArray(raw) {
-  const cleaned = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
+  // The model sometimes writes a number as a formula ("line_total": 3000 / 2). Work out simple "a op b" values.
+  const cleaned = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, "").replace(
+    /(:\s*)(-?\d+(?:\.\d+)?)\s*([\/*+\-])\s*(-?\d+(?:\.\d+)?)(?=\s*[,}\n])/g,
+    (m, lead, x, op, y) => {
+      x = Number(x); y = Number(y);
+      const v = op === "/" ? x / y : op === "*" ? x * y : op === "+" ? x + y : x - y;
+      return lead + Math.round(v * 100) / 100;
+    });
   let data = JSON.parse(cleaned);
   if (!Array.isArray(data)) {
     if (data && typeof data === "object") data = [data];
@@ -371,7 +412,21 @@ function parseJsonArray(raw) {
 }
 
 /* ---------- validation (blocking = must fix before Selenium) ---------- */
-function validate(orders, catalog) {
+// Conversion rules from the prompt:
+//   "- Lemon 1 Pc : 1 kg = 25 pc"      -> perKg["lemon 1 pc"] = 25
+//   "- Tomatoes : 1 box = 23 kg"       -> perUnit["tomatoes"].box = { n: 23, unit: "kg" }
+function parseOverrides(promptText) {
+  const perKg = {}, perUnit = {};
+  // "<A> kg = <B> pc" means B/A pieces per kg; "<A> gala = <B> pc" means B/A per gala
+  for (const m of promptText.matchAll(/^- (.+?)\s*:\s*([\d.]+) kg = ([\d.]+) pc/gim)) perKg[m[1].trim().toLowerCase()] = Number(m[3]) / Number(m[2]);
+  for (const m of promptText.matchAll(/^- (.+?)\s*:\s*([\d.]+) (box|bag|gala)(?: \([^)]*\))? = ([\d.]+) (pc|kg)/gim)) {
+    const name = m[1].trim().toLowerCase(), word = m[3].toLowerCase();
+    ((perUnit[name] = perUnit[name] || {})[word] = perUnit[name][word] || []).push({ n: Number(m[4]) / Number(m[2]), unit: m[5].toLowerCase() });
+  }
+  return { perKg, perUnit };
+}
+
+function validate(orders, catalog, defaultUnit, overrides) {
   const issues = [];
   const bad = (label, text) => issues.push({ level: "bad", label, text });
   const warn = (label, text) => issues.push({ level: "warn", label, text });
@@ -389,8 +444,41 @@ function validate(orders, catalog) {
     (o.items || []).forEach((it) => {
       const sku = String(it.sku);
       if (!(sku in catalog)) bad(label, "SKU " + sku + " (" + it.name + ") is not in items.txt.");
-      else if (catalog[sku] !== String(it.name || "").trim())
-        warn(label, "SKU " + sku + " is '" + catalog[sku] + "' in items.txt but the model named it '" + it.name + "'.");
+      else {
+        const entry = catalog[sku];
+        if (entry.name !== String(it.name || "").trim())
+          warn(label, "SKU " + sku + " is '" + entry.name + "' in items.txt but the model named it '" + it.name + "'.");
+        if (it.unit === "pc" && !Number.isInteger(Number(it.quantity)))
+          bad(label, entry.name + ": pieces must be a whole number but the model gave " + it.quantity + ".");
+        const expected = entry.unit || defaultUnit;
+        if (expected && it.unit !== expected)
+          bad(label, "Unit for " + entry.name + " (SKU " + sku + ") must be " + expected + " but the model gave " + it.unit + ".");
+        // Message used another unit than the DB: only allowed for items with a rule in the prompt, and the maths must match.
+        const key = entry.name.toLowerCase();
+        const rules = overrides || { perKg: {}, perUnit: {} };
+        const text = String(it.message_text || "");
+        const cont = text.match(/([\d.]+)\s*(box|boxes|bag|bags|gala)\b/i);
+        const kgNum = (text.match(/([\d.]+)\s*(?:kgs?|kilos?)\b/i) || [])[1];
+        const pcNum = (text.match(/([\d.]+)\s*(?:pcs?|pieces?)\b/i) || [])[1];
+        const kgToPc = it.unit === "pc" && kgNum && !pcNum, pcToKg = it.unit === "kg" && pcNum && !kgNum;
+        const check = (want, how) => {
+          if (Math.abs(want - Number(it.quantity)) > 1)
+            bad(label, "'" + text + "': quantity " + it.quantity + " " + it.unit + " does not match the rule (" + how + " gives about " + Math.round(want * 100) / 100 + ").");
+        };
+        if (cont) {
+          const word = cont[2].toLowerCase().replace(/es$|s$/, "");
+          const options = (rules.perUnit[key] || {})[word] || [];
+          if (!options.length) bad(label, "'" + text + "': there is no rule for " + word + " of " + entry.name + ".");
+          else if (options[0].unit !== it.unit) bad(label, "'" + text + "': " + word + " of " + entry.name + " must be entered in " + options[0].unit + ".");
+          else if (!options.some((r) => Math.abs(Number(cont[1]) * r.n - Number(it.quantity)) <= 1))
+            bad(label, "'" + text + "': quantity " + it.quantity + " " + it.unit + " does not match the rule (" + options.map((r) => Number(cont[1]) * r.n).join(" or ") + " expected).");
+        } else if (kgToPc || pcToKg) {
+          const factor = rules.perKg[key];
+          if (!factor)
+            bad(label, "'" + text + "': " + entry.name + " is " + it.unit + " in the DB but the message used the other unit, and there is no conversion rule for it.");
+          else check(kgToPc ? Number(kgNum) * factor : Number(pcNum) / factor, factor + " pc per kg");
+        }
+      }
     });
 
     const actual = Math.round(
@@ -505,36 +593,159 @@ async function fileToText(file) {
   } else {
     throw new Error("Unsupported file type: " + file.name + " (use Excel, PDF or .docx).");
   }
-  if (!text) throw new Error(file.name + " has no readable text (a scanned PDF or image can't be read).");
+  if (!text) throw new Error(file.name + " has no readable text (a scanned PDF can't be read; attach it as an image instead).");
   return text;
 }
-$("files").addEventListener("change", () => {
-  const n = $("files").files.length;
-  $("filesClear").classList.toggle("hidden", !n);
-  $("filesInfo").textContent = n ? [...$("files").files].map((f) => f.name).join(", ") : "Excel, PDF or Word (.docx)";
+/* ---------- attachment list (files, dropped files, pasted images) ---------- */
+const IMAGE_EXT = ["jpg", "jpeg", "png", "webp"];
+const DOC_EXT = ["xlsx", "xls", "csv", "pdf", "docx"];
+const extOf = (f) => f.name.split(".").pop().toLowerCase();
+const isImage = (f) => (f.type || "").startsWith("image/") || IMAGE_EXT.includes(extOf(f));
+let thumbUrls = [];
+
+function addFiles(files) {
+  const rejected = [];
+  for (const f of files) {
+    if (isImage(f) || DOC_EXT.includes(extOf(f))) attachments.push(f);
+    else rejected.push(f.name);
+  }
+  $("status").textContent = rejected.length ? "Not supported: " + rejected.join(", ") : "";
+  renderFiles();
+}
+function renderFiles() {
+  thumbUrls.forEach((u) => URL.revokeObjectURL(u));
+  thumbUrls = [];
+  const list = $("fileList");
+  list.textContent = "";
+  attachments.forEach((f, i) => {
+    const chip = document.createElement("div");
+    chip.className = "fchip";
+    if (isImage(f)) {
+      const img = document.createElement("img");
+      const url = URL.createObjectURL(f);
+      thumbUrls.push(url);
+      img.src = url;
+      chip.appendChild(img);
+    } else {
+      const ext = document.createElement("div");
+      ext.className = "ext";
+      ext.textContent = extOf(f);
+      chip.appendChild(ext);
+      if (extOf(f) === "pdf") pdfThumb(f, ext);
+    }
+    if (isImage(f) || extOf(f) === "pdf") {
+      chip.classList.add("clickable");
+      chip.title = "Click to view";
+      chip.addEventListener("click", (e) => { if (!e.target.closest("button")) openPreview(f); });
+    }
+    const nm = document.createElement("div");
+    nm.className = "nm";
+    nm.textContent = f.name;
+    const rm = document.createElement("button");
+    rm.type = "button";
+    rm.title = "Remove";
+    rm.textContent = "\u00d7";
+    rm.addEventListener("click", () => { attachments.splice(i, 1); renderFiles(); });
+    chip.append(nm, rm);
+    list.appendChild(chip);
+  });
+  $("filesInfo").textContent = attachments.length ? attachments.length + " attached. Drop or click to add more." : "Excel, PDF, Word or image";
   updateButton();
+}
+// First page of a PDF as the chip's thumbnail.
+async function pdfThumb(file, el) {
+  try {
+    if (typeof pdfjsLib === "undefined") return;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER;
+    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const page = await pdf.getPage(1);
+    const scale = 80 / page.getViewport({ scale: 1 }).width;
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+    if (!el.isConnected) return;
+    const img = document.createElement("img");
+    img.src = canvas.toDataURL("image/png");
+    img.style.objectPosition = "top";
+    el.replaceWith(img);
+  } catch {}
+}
+
+// Larger view of an image or PDF.
+let previewUrl = null;
+function openPreview(f) {
+  closePreview();
+  previewUrl = URL.createObjectURL(f);
+  $("previewName").textContent = f.name;
+  const body = $("previewBody");
+  if (isImage(f)) {
+    const img = document.createElement("img");
+    img.src = previewUrl;
+    body.appendChild(img);
+  } else {
+    const frame = document.createElement("iframe");
+    frame.src = previewUrl;
+    body.appendChild(frame);
+  }
+  $("preview").classList.remove("hidden");
+}
+function closePreview() {
+  $("preview").classList.add("hidden");
+  $("previewBody").textContent = "";
+  if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+}
+$("previewClose").addEventListener("click", closePreview);
+$("preview").addEventListener("click", (e) => { if (e.target === $("preview")) closePreview(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePreview(); });
+
+$("files").addEventListener("change", () => {
+  addFiles([...$("files").files]);
+  $("files").value = "";
 });
 $("message").addEventListener("input", updateButton);
 ["dragenter", "dragover"].forEach((ev) => $("drop").addEventListener(ev, (e) => { e.preventDefault(); $("drop").classList.add("over"); }));
 ["dragleave", "drop"].forEach((ev) => $("drop").addEventListener(ev, (e) => { e.preventDefault(); $("drop").classList.remove("over"); }));
-$("drop").addEventListener("drop", (e) => {
-  if (!e.dataTransfer.files.length) return;
-  $("files").files = e.dataTransfer.files;
-  $("files").dispatchEvent(new Event("change"));
+$("drop").addEventListener("drop", (e) => addFiles([...e.dataTransfer.files]));
+
+// Paste copied files or images (Cmd/Ctrl + V) anywhere on the page: a PDF or Excel copied in Finder/Explorer,
+// a WhatsApp image, a screenshot, etc.
+document.addEventListener("paste", (e) => {
+  const files = [...(e.clipboardData ? e.clipboardData.files : [])];
+  if (!files.length) return;
+  // Copying a file also puts its name on the clipboard as text; don't paste that into the message box.
+  // Pasted images keep the text paste (e.g. cells copied from Excel come with a picture of the cells).
+  if (files.some((f) => !isImage(f)) || !e.clipboardData.types.includes("text/plain")) e.preventDefault();
+  addFiles(files.map((f, n) => {
+    if (f.name && !/^image\.\w+$/i.test(f.name)) return f;
+    const kind = (f.type.split("/")[1] || "png").replace("jpeg", "jpg");
+    return new File([f], "pasted-image-" + (attachments.length + n + 1) + "." + kind, { type: f.type });
+  }));
 });
-$("filesClear").addEventListener("click", () => {
-  $("files").value = "";
-  $("filesClear").classList.add("hidden");
-  $("filesInfo").textContent = "Excel, PDF or Word (.docx)";
-  updateButton();
-});
+
+// Shrink big photos/screenshots so the request stays small, and re-encode as JPEG.
+async function imageToDataUrl(file, maxSide = 2000) {
+  let bitmap;
+  try { bitmap = await createImageBitmap(file); }
+  catch { throw new Error(file.name + " could not be read as an image (use jpg, png or webp)."); }
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.92);
+}
 
 /* ---------- main ---------- */
 $("convertBtn").addEventListener("click", async () => {
   const message = $("message").value.trim();
-  const attached = [...$("files").files];
+  const attached = attachments.slice();
   const status = (t) => ($("status").textContent = t);
-  const lists = [$("tickVictory").checked ? FILES.victory : FILES.produce];
+  const lists = [$("tickVictory").checked ? FILES.victory : $("tickFruits").checked ? FILES.fruits : FILES.veggies];
   if (!message && !attached.length) return status("Paste a message or attach a file.");
 
   $("convertBtn").disabled = true;
@@ -548,12 +759,16 @@ $("convertBtn").addEventListener("click", async () => {
     const systemPrompt = await readText(FILES.prompt);
     const itemTexts = await Promise.all(lists.map(readText));
     // one header, then every selected list's rows
-    const itemsText = ["Variation Name\tSku"]
+    const itemsText = [itemTexts[0].split(/\r?\n/)[0]]
       .concat(itemTexts.map((t) => t.split(/\r?\n/).slice(1).join("\n")))
       .join("\n");
     status("Reading attachments…");
     const attachedBlocks = [];
-    for (const f of attached) attachedBlocks.push("Attached file (" + f.name + ", converted to text):\n" + (await fileToText(f)));
+    const imageParts = [];
+    for (const f of attached) {
+      if (isImage(f)) imageParts.push({ type: "image_url", image_url: { url: await imageToDataUrl(f), detail: "high" } });
+      else attachedBlocks.push("Attached file (" + f.name + ", converted to text):\n" + (await fileToText(f)));
+    }
 
     status("Asking " + model + "…");
     const userContent =
@@ -561,16 +776,17 @@ $("convertBtn").addEventListener("click", async () => {
       "items.txt:\n" + itemsText + "\n\n" +
       (message ? "Vendor procurement message:\n" + message + "\n\n" : "") +
       attachedBlocks.map((b) => b + "\n\n").join("") +
+      (imageParts.length ? "Attached image(s): " + imageParts.length + ", shown after this text. Read the text in them as the vendor message or invoice.\n\n" : "") +
       "Convert everything in one pass. Output only the JSON array.";
     const choice = await callOpenAI(apiKey, model, [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userContent },
+      { role: "user", content: imageParts.length ? [{ type: "text", text: userContent }, ...imageParts] : userContent },
     ]);
     if (choice.finish_reason === "length")
       throw new Error("Model output was cut off (finish_reason=length). The JSON would be partial.");
 
     const orders = parseJsonArray(choice.message.content);
-    const issues = validate(orders, loadCatalog(itemsText));
+    const issues = validate(orders, loadCatalog(itemsText), $("tickVictory").checked ? "pc" : "", parseOverrides(systemPrompt));
     const clean = !issues.some((i) => i.level === "bad");
 
     if (clean) {
