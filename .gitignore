@@ -1,0 +1,22 @@
+# secrets and local config
+.env
+credentials.py
+.claude/
+
+# generated / per-run files
+purchase_orders.json
+purchase_orders.rejected.json
+message.txt
+*.xlsx
+*.xls
+
+# python
+venv/
+__pycache__/
+*.pyc
+
+# stale leftovers from older versions
+convert_message.py
+prompts/items.txt
+
+.DS_Store

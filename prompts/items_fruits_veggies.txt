@@ -1,0 +1,125 @@
+Variation Name	Sku
+Alponso Mango	176
+Amla / Usiri	55
+Any Apple	1245522
+Ash Gourd / Boodida Gummadikaya	46
+Baby Apple	1492
+Baby Corn 1 Pc	77
+Baby Potato 500gms	80
+Bachali	96
+Bajji Mirchi	6
+Banana Stem	82
+Banganapalle Mango	171
+Beetroot	20
+Black Brinjal / Nalla Vankaya	9
+Blueberry 1 Box	109
+Bottle Guard / Sorakaya 1 Pc	16
+Brinjal Barta Purple / Purple Eggplant 	14
+Broccoli	69
+Cabbage 	27
+Capsicum	64
+Carrot	19
+Cauliflower 1 Pc	26
+Chamadumpa / colocasia	62
+Cherry	1416
+Cherry Tomato 500 gm	78
+Cheruku Rasalu Mango	174
+Chikkudu / Beans Broad 	36
+Chukkakura	91
+Cluster Beans / Goru Chikkudu	38
+Coconut / Kobbarikaya 1 Pc	49
+Curry leaves / Karvepaku	92
+Dark Green Chilli / Black Mirchi	5
+Daseri Mango	172
+Date Fruit	8002
+Disco Pumkin	143
+Dondakaya	30
+Dosakaya / Yellow Cucumber	34
+Drumstick 1 Pc	25
+Drumstick Leaf / Moringa / Munagaku 1 Pc	84
+English Keera / English Cucumber	42
+Flowers	5000
+Gangavalli	87
+Garlic	23
+Ginger	22
+Gongura / Sorrel Leaves	85
+Green Apple	156
+Green Brinjal / Green Vankaya	10
+Green Lettuce	181
+Green Mirchi / Green Chilli	4
+Green Pumkin  / Gummadikaya	44
+Guava / Jama	113
+Haricot Beans / French Beans 	35
+Himayat Mango	1245580
+Iceberg Lettuce	186
+Imported Avacado	108
+Imported Kiwi - Box of 3	1473
+Imported Oranges / Malta	103
+Jack Fruit	126
+Jamoon / Neredukaya	160
+Kakarakaya / Bitter Gourd	31
+Kanda / Yam Slice	63
+Karpuram Banana	119
+kothimeera / Coriander	90
+Ladys Finger / Bendakaya	8
+Lemon 1 Pc	24
+Lobia	40
+Local Banana	117
+Local Keera / Local Cucumber	41
+Long Brinjal Pennadi / Podugu Vankaya	11
+Mandarin Orange	101
+Mango Ginger	21
+Mango Kesari	1245588
+Methi / Menthi - Small	89
+Mosambi	104
+Mushrooms 1 Pc	57
+Musk Melon / Karbuja	122
+Natu Aakakara	32
+Neeti Beera	18
+onion	2
+Papaya	120
+Parval / Pointed gourd	29
+Pears	124
+Pineapple Small 1 Pc	121
+Plums / Albakara	127
+Pomogranate	106
+Ponaganti	97
+Potato	3
+Pudina / Mint 	86
+Purple Brinjal	12
+Raddish / Mullangi 1 Pc	60
+Raw Banana / Pachi Arati 1 Pc - Small	53
+Raw Groundnuts / Pacchi Palli	56
+Raw Mango / Pacchi Mamidi	54
+Raw Papaya	1581
+Red Cabbage	28
+Red Capsicum	65
+Red Chilli / Pandu Mirchi	7
+Red Dragon Fruit 1 Pc	110
+Ridge Gourd / Beerakaya	17
+Round Bottle Guard	83
+Royal gala	151
+Sambar Onion 1Pc / 500gms	71
+Sapota	105
+Sara Brinjal/ Sara Vankaya	1245544
+Small Methi	98
+Snake Gourd / Potlakaya 1 Pc	43
+Soy Koora / Dil Leaf	183
+Special Banganapalle Mango	165
+Spinach / Palakura	95
+spring onion	94
+Sprouts 1 Pc	185
+Sweet Corn 1 Pc	50
+Sweet Potato / Chilagadadumpa	61
+Thai Guava	112
+Thotakura / Amaranthus	88
+Tomatoes	1
+Turkey  Apple	155
+Turmeric / Pachi Pasupu Kommu	79
+Water Melon	116
+White Dragon Fruit 1 Pc	132
+White Onion	1245521
+Yellow Capsicum	66
+Yellow Pumkin / Gummadikaya	45
+Zucchini Green	67
+Zucchini Yellow	68

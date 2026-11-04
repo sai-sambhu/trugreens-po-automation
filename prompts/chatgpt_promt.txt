@@ -1,0 +1,5 @@
+Read message_to_json_prompt.txt fully and follow every rule in it, not just the schema. Convert items.txt plus the attached invoice/message into JSON in that exact format. Output only the JSON, as a downloadable .json file — never pasted inline, never partial, never asking for confirmation first.
+
+Three things you keep getting wrong specifically, watch for them: (1) applying the BRAND PREFIX RULE consistently to every line on a long invoice, not just most of them; (2) computing "computed_total" by genuinely summing line_totals, never copying stated_total; (3) NOT inventing a pc/kg conversion for an item unless items.txt or the prompt's tables actually call for one — trust the unit as reported by default, especially for Kirana items and leafy greens/herbs.
+
+Within this same chat thread, I'll only attach the invoice file going forward — items.txt and this prompt stay as already given here, keep using them as-is. (A new chat won't have them — re-attach everything there.)

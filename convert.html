@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TruGreens PO Converter</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f6f3; --surface: #ffffff; --surface-2: #f8faf8; --text: #17201b; --muted: #64706a;
+    --line: #e1e6e1; --line-strong: #cdd5cd;
+    --accent: #1b7a4b; --accent-hover: #166640; --accent-soft: #e4f3ea; --accent-text: #ffffff;
+    --bad: #b3261e; --bad-bg: #fdeceb; --warn: #8a5a00; --warn-bg: #fff3d9;
+    --ok: #1b7a4b; --ok-bg: #e4f3ea;
+    --shadow: 0 1px 2px rgba(20,32,25,.05), 0 4px 16px rgba(20,32,25,.04);
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101412; --surface: #181e1b; --surface-2: #1d2420; --text: #e7ece8; --muted: #8b968f;
+      --line: #28312c; --line-strong: #37433c;
+      --accent: #3fb07a; --accent-hover: #55c28d; --accent-soft: #173326; --accent-text: #08130d;
+      --bad: #ff8f86; --bad-bg: #3a1f1c; --warn: #f2c46f; --warn-bg: #3a3018;
+      --ok: #6fd6a2; --ok-bg: #173326;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 940px; margin: 0 auto; padding: 28px 16px 72px; }
+
+  /* header */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 40px; height: 40px; border-radius: 11px; background: var(--accent); color: var(--accent-text);
+    display: grid; place-items: center; font-weight: 800; font-size: 15px; letter-spacing: .02em; }
+  h1 { font-size: 20px; line-height: 1.2; margin: 0; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 2px 0 0; font-size: 13.5px; }
+  .folder { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 6px 5px 14px; box-shadow: var(--shadow); font-size: 13.5px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); flex: none; }
+  .dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); }
+  #folderPill { background: none; padding: 0; font-weight: 600; }
+  #folderPill.ok { color: var(--ok); } #folderPill.bad { color: var(--bad); } #folderPill.idle { color: var(--muted); }
+  #folderHint { display: block; color: var(--muted); font-size: 13px; margin: -8px 4px 18px; text-align: right; }
+  #folderHint:empty { display: none; }
+
+  /* cards */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px; margin-bottom: 18px; }
+  .card-head { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; }
+  .step { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; font-size: 12.5px; font-weight: 700; flex: none; }
+  .card h2 { font-size: 15px; margin: 0; font-weight: 650; letter-spacing: -.005em; }
+
+  /* inputs */
+  .field { margin-bottom: 18px; }
+  .lbl { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 7px; }
+  .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+  .grid .field { margin-bottom: 0; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } .grid .field + .field { margin-top: 18px; } }
+
+  .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg label { cursor: pointer; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg span { display: block; padding: 7px 16px; border-radius: 7px; font-weight: 550; color: var(--muted); transition: background .15s, color .15s; }
+  .seg input:checked + span { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  textarea { width: 100%; min-height: 190px; resize: vertical; padding: 12px 14px; border-radius: 10px;
+    border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text);
+    font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; transition: border-color .15s, box-shadow .15s; }
+  textarea::placeholder { color: var(--muted); opacity: .7; }
+  textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  .drop { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px;
+    min-height: 190px; padding: 16px; border: 1.5px dashed var(--line-strong); border-radius: 10px;
+    background: var(--surface-2); cursor: pointer; transition: border-color .15s, background .15s; }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop input { display: none; }
+  .drop strong { font-size: 14.5px; }
+  .drop svg { width: 26px; height: 26px; color: var(--accent); margin-bottom: 4px; }
+  #filesInfo { color: var(--muted); font-size: 13px; word-break: break-word; }
+  #filesClear { margin-top: 8px; }
+
+  /* buttons */
+  button { font: inherit; font-size: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text);
+    border-radius: 9px; padding: 7px 14px; cursor: pointer; transition: background .15s, border-color .15s; }
+  button:hover:not(:disabled) { background: var(--surface-2); border-color: var(--muted); }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 650; }
+  button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+  button.big { padding: 11px 24px; font-size: 15px; border-radius: 10px; }
+  button.small { padding: 4px 12px; font-size: 13px; border-radius: 999px; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+  #status { color: var(--muted); font-size: 14px; }
+
+  /* result */
+  .banner { display: flex; align-items: center; gap: 10px; border-radius: 10px; padding: 12px 14px; font-weight: 650; margin-bottom: 14px; }
+  .banner::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: none; }
+  .banner.ok { background: var(--ok-bg); color: var(--ok); }
+  .banner.bad { background: var(--bad-bg); color: var(--bad); }
+  ul.issues { list-style: none; padding: 0; margin: 0 0 6px; display: grid; gap: 8px; }
+  ul.issues:empty { display: none; }
+  ul.issues li { padding: 10px 12px 10px 14px; border-radius: 9px; font-size: 14px; border-left: 4px solid; }
+  ul.issues li.bad { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+  ul.issues li.warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
+  ul.issues li b { font-weight: 650; display: block; font-size: 12.5px; opacity: .85; margin-bottom: 1px; }
+
+  #summary p { margin: 18px 0 8px; font-size: 14px; color: var(--muted); }
+  #summary p b { color: var(--text); font-size: 15px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; background: var(--surface-2); }
+  th:first-child { border-top-left-radius: 8px; } th:last-child { border-top-right-radius: 8px; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; border-top: 2px solid var(--line-strong); font-size: 14.5px; }
+  .tablewrap { overflow-x: auto; }
+
+  details { margin-top: 16px; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 13.5px; font-weight: 550; }
+  pre { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+    overflow: auto; max-height: 360px; font-size: 12.5px; margin: 10px 0 0; }
+  code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px;
+    font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+
+  .pill { display: inline-block; }
+  .muted { color: var(--muted); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div class="brand">
+      <div class="logo">TG</div>
+      <div>
+        <h1>TruGreens PO Converter</h1>
+        <p class="sub">Paste a message and/or attach files. Only a clean result is saved for Selenium.</p>
+      </div>
+    </div>
+    <div class="folder">
+      <span class="dot" id="folderDot"></span>
+      <span id="folderPill" class="pill idle">not connected</span>
+      <button id="folderBtn" class="small">Choose folder</button>
+    </div>
+  </header>
+  <span class="muted" id="folderHint">Pick the project folder (the one with .env and the prompts folder).</span>
+
+  <section class="card">
+    <div class="card-head"><span class="step">1</span><h2>Input</h2></div>
+
+    <div class="field">
+      <span class="lbl">Item list sent to the AI</span>
+      <div class="seg">
+        <label><input type="radio" name="list" id="tickProduce" checked><span>Fruits &amp; veggies</span></label>
+        <label><input type="radio" name="list" id="tickVictory"><span>Victory</span></label>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <span class="lbl">Message</span>
+        <textarea id="message" placeholder="Kanchana fruits&#10;4th Aug&#10;Thai guava-28 kgs - 2430&#10;Hamali-200"></textarea>
+      </div>
+      <div class="field">
+        <span class="lbl">Attachments</span>
+        <label class="drop" id="drop">
+          <input type="file" id="files" multiple accept=".xlsx,.xls,.csv,.pdf,.docx">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <strong>Drop files or click to browse</strong>
+          <span id="filesInfo">Excel, PDF or Word (.docx)</span>
+        </label>
+        <button id="filesClear" class="small hidden">Remove files</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="convertBtn" class="primary big" disabled>Convert &amp; validate</button>
+      <span id="status"></span>
+    </div>
+  </section>
+
+  <section id="result" class="card hidden">
+    <div class="card-head"><span class="step">2</span><h2>Result</h2></div>
+    <div id="banner" class="banner"></div>
+    <ul id="issues" class="issues"></ul>
+    <div id="summary" class="tablewrap"></div>
+    <details><summary>Raw JSON</summary><pre id="raw"></pre></details>
+  </section>
+
+  <section id="next" class="card hidden">
+    <div class="card-head"><span class="step">3</span><h2>Start Selenium</h2></div>
+    <p style="margin:0 0 14px"><code>purchase_orders.json</code> is saved. Double-click <code>run_selenium.command</code> in the project folder, or paste the command into Terminal.</p>
+    <div class="row" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <button id="copyBtn" class="primary">Copy run command</button>
+      <code id="runCmd"></code>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script>
+const FILES = {
+  env: [".env"],
+  prompt: ["prompts", "message_to_json_prompt.txt"],
+  produce: ["prompts", "items_fruits_veggies.txt"],
+  victory: ["prompts", "items_victory.txt"],
+};
+const OUTPUT = "purchase_orders.json";
+const PDF_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const API_URL = "https://api.openai.com/v1/chat/completions";
+const $ = (id) => document.getElementById(id);
+
+let dir = null;
+
+/* ---------- remembered folder (IndexedDB) ---------- */
+function idb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("po-converter", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("kv");
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbGet(key) {
+  try {
+    const db = await idb();
+    return await new Promise((res) => {
+      const r = db.transaction("kv").objectStore("kv").get(key);
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => res(undefined);
+    });
+  } catch { return undefined; }
+}
+async function idbSet(key, value) {
+  try {
+    const db = await idb();
+    db.transaction("kv", "readwrite").objectStore("kv").put(value, key);
+  } catch {}
+}
+
+function setFolder(handle, granted) {
+  dir = granted ? handle : null;
+  const pill = $("folderPill");
+  if (granted) {
+    pill.textContent = "connected: " + handle.name;
+    pill.className = "pill ok";
+    $("folderDot").className = "dot ok";
+    $("folderBtn").textContent = "Change folder";
+    $("folderHint").textContent = "";
+  } else if (handle) {
+    pill.textContent = "needs permission: " + handle.name;
+    pill.className = "pill bad";
+    $("folderDot").className = "dot bad";
+    $("folderBtn").textContent = "Reconnect";
+    $("folderHint").textContent = "Browsers ask again after a restart. One click.";
+  }
+  updateButton();
+}
+function updateButton() {
+  const hasInput = $("message").value.trim() || $("files").files.length;
+  $("convertBtn").disabled = !dir || !hasInput;
+}
+
+let pendingHandle = null;
+$("folderBtn").addEventListener("click", async () => {
+  try {
+    if (pendingHandle && (await pendingHandle.requestPermission({ mode: "readwrite" })) === "granted") {
+      setFolder(pendingHandle, true);
+      return;
+    }
+    if (!window.showDirectoryPicker) {
+      $("folderHint").textContent = "This browser can't pick folders. Use Chrome or Edge.";
+      return;
+    }
+    const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+    pendingHandle = handle;
+    await idbSet("dir", handle);
+    setFolder(handle, true);
+  } catch (e) {
+    if (e.name !== "AbortError") $("folderHint").textContent = "Could not open folder: " + e.message;
+  }
+});
+
+(async () => {
+  const handle = await idbGet("dir");
+  if (!handle) return;
+  pendingHandle = handle;
+  const granted = (await handle.queryPermission({ mode: "readwrite" })) === "granted";
+  setFolder(handle, granted);
+})();
+
+/* ---------- file helpers ---------- */
+async function readText(path) {
+  let folder = dir;
+  for (const part of path.slice(0, -1)) folder = await folder.getDirectoryHandle(part);
+  const fh = await folder.getFileHandle(path[path.length - 1]);
+  return (await (await fh.getFile()).text()).trim();
+}
+async function writeText(name, text) {
+  const fh = await dir.getFileHandle(name, { create: true });
+  const w = await fh.createWritable();
+  await w.write(text);
+  await w.close();
+}
+function parseEnv(text) {
+  const env = {};
+  for (let line of text.split(/\r?\n/)) {
+    line = line.trim();
+    if (!line || line.startsWith("#") || !line.includes("=")) continue;
+    const i = line.indexOf("=");
+    env[line.slice(0, i).trim()] = line.slice(i + 1).trim().replace(/^["']|["']$/g, "");
+  }
+  return env;
+}
+function loadCatalog(itemsText) {
+  const catalog = {};
+  itemsText.split(/\r?\n/).slice(1).forEach((line) => {
+    const i = line.lastIndexOf("\t");
+    if (i < 0) return;
+    catalog[line.slice(i + 1).trim()] = line.slice(0, i).trim();
+  });
+  return catalog;
+}
+
+/* ---------- OpenAI ---------- */
+async function callOpenAI(apiKey, model, messages) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ model, messages }),
+  });
+  const body = await res.text();
+  if (!res.ok) throw new Error("OpenAI API error " + res.status + ": " + body);
+  return JSON.parse(body).choices[0];
+}
+function todayISO() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+function parseJsonArray(raw) {
+  const cleaned = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
+  let data = JSON.parse(cleaned);
+  if (!Array.isArray(data)) {
+    if (data && typeof data === "object") data = [data];
+    else throw new Error("Model output is not a JSON array");
+  }
+  return data;
+}
+
+/* ---------- validation (blocking = must fix before Selenium) ---------- */
+function validate(orders, catalog) {
+  const issues = [];
+  const bad = (label, text) => issues.push({ level: "bad", label, text });
+  const warn = (label, text) => issues.push({ level: "warn", label, text });
+
+  if (orders.length > 1) {
+    bad("all", "Message produced " + orders.length + " orders but Selenium only enters the first one.");
+  }
+  if (orders.length === 0) bad("all", "Model returned no orders.");
+
+  orders.forEach((o) => {
+    const label = (o.delivery_date || "no date") + " / " + (o.vendor || "no vendor");
+    if (!o.vendor) bad(label, "Vendor is null, the automation needs one.");
+    if (!o.delivery_date) bad(label, "Delivery date is missing.");
+
+    (o.items || []).forEach((it) => {
+      const sku = String(it.sku);
+      if (!(sku in catalog)) bad(label, "SKU " + sku + " (" + it.name + ") is not in items.txt.");
+      else if (catalog[sku] !== String(it.name || "").trim())
+        warn(label, "SKU " + sku + " is '" + catalog[sku] + "' in items.txt but the model named it '" + it.name + "'.");
+    });
+
+    const actual = Math.round(
+      ((o.items || []).reduce((s, i) => s + (i.line_total || 0), 0) +
+        (o.additional_charges || []).reduce((s, c) => s + (c.amount || 0), 0)) * 100) / 100;
+    if (Math.abs(actual - (o.computed_total || 0)) > 0.01)
+      warn(label, "Model's computed_total was " + o.computed_total + " but the real sum is " + actual + " (corrected in the saved JSON).");
+    o.computed_total = actual;
+
+    (o.unmatched_items || []).forEach((u) =>
+      bad(label, "Unmatched: " + u.message_text + ". " + (u.reason || "")));
+    (o.unit_mismatches || []).forEach((m) =>
+      bad(label, "Unit mismatch: " + m.item + " (backend " + m.backend_unit + ", message said " + m.message_unit + ", '" + m.message_text + "') converted to " + m.converted_quantity + " via " + m.conversion_factor + "."));
+    (o.new_outliers_detected || []).forEach((n) =>
+      warn(label, "New estimated conversion: " + n.item + " at " + n.conversion_factor + "."));
+    (o.warnings || []).forEach((w) => warn(label, w));
+  });
+  return issues;
+}
+
+/* ---------- rendering ---------- */
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const money = (n) => (n == null ? "" : Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 }));
+
+function render(orders, issues, saved) {
+  $("result").classList.remove("hidden");
+  const blocking = issues.filter((i) => i.level === "bad");
+  const banner = $("banner");
+  if (blocking.length) {
+    banner.className = "banner bad";
+    banner.textContent = blocking.length + " issue" + (blocking.length > 1 ? "s" : "") + " to fix";
+  } else {
+    banner.className = "banner ok";
+    banner.textContent = "No issues";
+  }
+  $("issues").innerHTML = issues
+    .map((i) => '<li class="' + i.level + '"><b>' + esc(i.label) + "</b>" + esc(i.text) + "</li>").join("");
+  $("next").classList.toggle("hidden", !saved);
+
+  $("summary").innerHTML = orders.map((o) => {
+    const rows = (o.items || []).map((it) =>
+      "<tr><td>" + esc(it.name) + '</td><td>' + esc(it.sku) + '</td><td class="num">' + esc(it.quantity) + " " + esc(it.unit) +
+      '</td><td class="num">' + money(it.buying_price_per_unit) + '</td><td class="num">' + money(it.line_total) + "</td></tr>").join("");
+    const charges = (o.additional_charges || []).map((c) =>
+      '<tr><td colspan="4" class="muted">' + esc(c.description) + '</td><td class="num">' + money(c.amount) + "</td></tr>").join("");
+    return "<p><b>" + esc(o.vendor || "no vendor") + "</b> · " + esc(o.delivery_date || "no date") + "</p>" +
+      '<table><tr><th>Item</th><th>SKU</th><th class="num">Qty</th><th class="num">Price/unit</th><th class="num">Line total</th></tr>' +
+      rows + charges +
+      '<tr><td colspan="4"><b>Total (items + charges)</b></td><td class="num"><b>' + money(o.computed_total) + "</b></td></tr></table>";
+  }).join("");
+  $("raw").textContent = JSON.stringify(orders, null, 2);
+}
+
+/* ---------- run command ---------- */
+const pageDir = decodeURIComponent(location.pathname).replace(/\/[^/]*$/, "");
+const runCommand = 'bash "' + pageDir + '/run_selenium.command"';
+$("runCmd").textContent = runCommand;
+$("copyBtn").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(runCommand);
+    $("copyBtn").textContent = "Copied";
+  } catch {
+    $("copyBtn").textContent = "Copy it from the box";
+  }
+  setTimeout(() => ($("copyBtn").textContent = "Copy run command"), 2000);
+});
+
+/* ---------- attachments (Excel, PDF, Word -> plain text) ---------- */
+function needLib(ok, what) {
+  if (!ok) throw new Error(what + " reader could not load (needs internet once).");
+}
+async function fileToText(file) {
+  const ext = file.name.split(".").pop().toLowerCase();
+  const buf = await file.arrayBuffer();
+  let text = "";
+  if (ext === "xlsx" || ext === "xls" || ext === "csv") {
+    needLib(typeof XLSX !== "undefined", "Excel");
+    const wb = XLSX.read(buf, { type: "array" });
+    text = wb.SheetNames.map((name) => {
+      const csv = XLSX.utils.sheet_to_csv(wb.Sheets[name], { blankrows: false }).trim();
+      return csv ? "--- sheet: " + name + " ---\n" + csv : "";
+    }).filter(Boolean).join("\n\n");
+  } else if (ext === "pdf") {
+    needLib(typeof pdfjsLib !== "undefined", "PDF");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER;
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const pages = [];
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const content = await (await pdf.getPage(n)).getTextContent();
+      pages.push(content.items.map((i) => i.str + (i.hasEOL ? "\n" : " ")).join("").trim());
+    }
+    text = pages.filter(Boolean).join("\n\n");
+  } else if (ext === "docx") {
+    needLib(typeof mammoth !== "undefined", "Word");
+    text = (await mammoth.extractRawText({ arrayBuffer: buf })).value.trim();
+  } else {
+    throw new Error("Unsupported file type: " + file.name + " (use Excel, PDF or .docx).");
+  }
+  if (!text) throw new Error(file.name + " has no readable text (a scanned PDF or image can't be read).");
+  return text;
+}
+$("files").addEventListener("change", () => {
+  const n = $("files").files.length;
+  $("filesClear").classList.toggle("hidden", !n);
+  $("filesInfo").textContent = n ? [...$("files").files].map((f) => f.name).join(", ") : "Excel, PDF or Word (.docx)";
+  updateButton();
+});
+$("message").addEventListener("input", updateButton);
+["dragenter", "dragover"].forEach((ev) => $("drop").addEventListener(ev, (e) => { e.preventDefault(); $("drop").classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => $("drop").addEventListener(ev, (e) => { e.preventDefault(); $("drop").classList.remove("over"); }));
+$("drop").addEventListener("drop", (e) => {
+  if (!e.dataTransfer.files.length) return;
+  $("files").files = e.dataTransfer.files;
+  $("files").dispatchEvent(new Event("change"));
+});
+$("filesClear").addEventListener("click", () => {
+  $("files").value = "";
+  $("filesClear").classList.add("hidden");
+  $("filesInfo").textContent = "Excel, PDF or Word (.docx)";
+  updateButton();
+});
+
+/* ---------- main ---------- */
+$("convertBtn").addEventListener("click", async () => {
+  const message = $("message").value.trim();
+  const attached = [...$("files").files];
+  const status = (t) => ($("status").textContent = t);
+  const lists = [$("tickVictory").checked ? FILES.victory : FILES.produce];
+  if (!message && !attached.length) return status("Paste a message or attach a file.");
+
+  $("convertBtn").disabled = true;
+  $("next").classList.add("hidden");
+  try {
+    status("Reading project files…");
+    const env = parseEnv(await readText(FILES.env));
+    const apiKey = env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error("OPENAI_API_KEY not found in .env");
+    const model = env.OPENAI_MODEL || "gpt-4.1";
+    const systemPrompt = await readText(FILES.prompt);
+    const itemTexts = await Promise.all(lists.map(readText));
+    // one header, then every selected list's rows
+    const itemsText = ["Variation Name\tSku"]
+      .concat(itemTexts.map((t) => t.split(/\r?\n/).slice(1).join("\n")))
+      .join("\n");
+    status("Reading attachments…");
+    const attachedBlocks = [];
+    for (const f of attached) attachedBlocks.push("Attached file (" + f.name + ", converted to text):\n" + (await fileToText(f)));
+
+    status("Asking " + model + "…");
+    const userContent =
+      "Today's date: " + todayISO() + " (use it to infer a missing year)\n\n" +
+      "items.txt:\n" + itemsText + "\n\n" +
+      (message ? "Vendor procurement message:\n" + message + "\n\n" : "") +
+      attachedBlocks.map((b) => b + "\n\n").join("") +
+      "Convert everything in one pass. Output only the JSON array.";
+    const choice = await callOpenAI(apiKey, model, [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent },
+    ]);
+    if (choice.finish_reason === "length")
+      throw new Error("Model output was cut off (finish_reason=length). The JSON would be partial.");
+
+    const orders = parseJsonArray(choice.message.content);
+    const issues = validate(orders, loadCatalog(itemsText));
+    const clean = !issues.some((i) => i.level === "bad");
+
+    if (clean) {
+      status("Saving…");
+      await writeText(OUTPUT, JSON.stringify(orders, null, 2));
+    }
+    render(orders, issues, clean);
+    status(clean ? "Done." : "Fix the prompt or message, then convert again.");
+  } catch (e) {
+    status("");
+    $("result").classList.remove("hidden");
+    $("banner").className = "banner bad";
+    $("banner").textContent = "Failed: " + e.message;
+    $("issues").innerHTML = "";
+    $("summary").innerHTML = "";
+    $("raw").textContent = "";
+  } finally {
+    updateButton();
+  }
+});
+</script>
+</body>
+</html>
