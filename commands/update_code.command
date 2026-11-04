@@ -1,5 +1,5 @@
 #!/bin/bash
-cd "$(dirname "$0")" || exit 1
+cd "$(dirname "$0")/.." || exit 1
 if [ ! -d .git ]; then
   echo "This folder is not a git clone, so it can't be updated this way."
   echo "Re-download it from https://github.com/sai-sambhu/trugreens-po-automation"
