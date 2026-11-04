@@ -28,7 +28,7 @@ DELIVERY DATE
 ITEM MATCHING
 ===========================================================
 - Match every line to an EXACT "Variation Name" from items.txt (character-for-character — capitalization, slashes, spacing) for record-keeping in the JSON. Copy the name straight from items.txt, never retype it — including spaces inside brackets and before units (e.g. "950Gm(+/- 50 Gm)", not "950Gm(+/- 50Gm)").
-- Resolve shorthand/typos/partial names via fuzzy + semantic matching, including Telugu/English produce synonyms (e.g. "Pinnaple" -> "Pineapple Small 1 Pc", "Barta" -> "Brinjal Barta Purple / Purple Eggplant", "Snake guard" -> "Snake Gourd / Potlakaya 1 Pc", "Kakara" -> "Kakarakaya / Bitter Gourd", "Aa kakara" -> "Natu Aakakara").
+- Resolve shorthand/typos/partial names via fuzzy + semantic matching, including Telugu/English produce synonyms (e.g. "Pinnaple" -> "Pineapple 1 Pc", "Barta" -> "Brinjal Barta Purple / Purple Eggplant", "Snake guard" -> "Snake Gourd / Potlakaya 1 Pc", "Kakara" -> "Kakarakaya / Bitter Gourd", "Aa kakara" -> "Natu Aakakara").
 - MANDATORY FIRST STEP FOR VICTORY INVOICES — DO THIS BEFORE ANYTHING ELSE, FOR EVERY LINE, NO EXCEPTIONS: items.txt's Kirana rows do NOT have "Victory" in front of them in the invoice — the invoice just says "Sugar Chips 100 Gm", but the items.txt row is "Victory Sugar Chips 100 Gm". So for every single line on a Victory invoice, before trying anything else, literally construct the string "Victory " + the line's item name and look that up in items.txt FIRST. This is not one option among several to consider later — it is the first and default lookup for every Kirana line, applied mechanically to all of them, not just the ones that "seem like" they need it. Only if THAT exact lookup fails do you move on to plain exact match, synonyms, spelling drift, etc. (below).
 - BRAND PREFIX RULE (Kirana items, vendor-relative): the rule above is the Victory-specific case of this more general rule.
   This rule is entirely relative to whichever vendor the CURRENT invoice is from — it is never a fixed preference for one company over another. When items.txt has more than one candidate for the same generic product (some combination of company-prefixed variants like "Victory X" / "Nutri X", and/or a plain unprefixed "X"), always pick whichever one belongs to the current invoice's vendor:
@@ -46,7 +46,7 @@ ITEM MATCHING
   Every item in "unmatched_items" must carry a "reason" field naming the SPECIFIC string you looked up and confirming it's genuinely absent (e.g. "looked up 'Victory Dhaniya (Green) 100Gm' in items.txt — not present; no bulk-Kg or spelling-variant candidate either"), not a generic checklist recitation. If the same boilerplate reason text would fit more than 2-3 different unmatched items unchanged, that is a sign the checklist wasn't actually re-run per item — go back and actually look up each one's own vendor-prefixed string.
 - TRACK EVERY NON-TRIVIAL MATCH: whenever a line is matched via checklist step 1 (Victory-prefix), 2, 3, or 4 (i.e. anything other than a plain unprefixed exact string match) — including SUCCESSFUL matches that end up in "items" — also add an entry to "retried_matches" (see schema below), naming which step resolved it and how. This is separate from "unmatched_items": it's the audit trail for matches that DID succeed but weren't obvious, so the user can spot-check exactly the matches most likely to contain an error, without having to re-derive which ones those were.
 - Genuinely ambiguous with no rule to break the tie (e.g. "Dragon" -> Red or White Dragon Fruit 1 Pc)? Don't guess — put it in "unmatched_items" with candidates listed and a reason naming the tie.
-- No plausible items.txt match at all even after the checklist above (e.g. "Premium royal gala")? Put it in "unmatched_items" with the raw text, line_total (the total for that line — see BUYING_PRICE_PER_UNIT section; do NOT put a per-unit rate here even if that's what the source shows), and reason. Never invent a match, and never loosen the SELF-VERIFICATION standard just to force a match out of desperation — a correctly-flagged unmatched item is better than a wrong match.
+- No plausible items.txt match at all even after the checklist above (e.g. "Rambutan", which is not in the list)? Put it in "unmatched_items" with the raw text, line_total (the total for that line — see BUYING_PRICE_PER_UNIT section; do NOT put a per-unit rate here even if that's what the source shows), and reason. Never invent a match, and never loosen the SELF-VERIFICATION standard just to force a match out of desperation — a correctly-flagged unmatched item is better than a wrong match.
 - Every matched item — produce/Fnv AND Victory/Kirana alike — needs its exact "sku" from items.txt. No matched item has a null sku (only unmatched ones lack one): the automation searches the item dropdown by SKU, zero-padded to 4 digits, not by name, so a missing sku means that item can't be entered at all.
 - SELF-VERIFICATION (this is what catches long-invoice matching errors — do not skip it): before finalizing, re-read every item's "message_text" against the "name" you matched it to, and confirm they are actually the same product, not just similarly formatted. Fuzzy matching is for spelling/spacing variants of the SAME product (typos, synonyms) — it is NOT license to conflate two DIFFERENT products that happen to share a pattern like "<Word> Chips 100/500 Gm" or "Bellum (<letter>)". Concretely: "Sugar Chips" and "Soya Chips" are different products (sugar vs soy, not a typo of each other) — matching an invoice line for one to the items.txt entry for the other is wrong even though both exist in items.txt, and even though the numbers add up. If a re-check surfaces this kind of mismatch, move that line to "unmatched_items" instead of forcing a fuzzy match past where the actual product changes. This matters most on long invoices (50+ lines) where many entries share near-identical formatting.
 
@@ -55,9 +55,8 @@ UNIT HANDLING
 ===========================================================
 The unit of every item is fixed by the backend (DB). Take it from the item list — never from the item's name, and never from what sounds natural in everyday English.
 
-1. Item list WITH a third column "Count or Weight" (veggies/leafy lists): Count -> backend unit "pc"; Weight -> backend unit "kg". This column is the ONLY source of truth. Ignore any "1 Pc", "1 Kg", "250g" etc. written inside the item name.
-2. Item list WITHOUT that column and NOT Victory (fruits, until the column is added): "1 Pc"/"1 Box" in the name -> "pc"; otherwise "kg". Imported Avacado is "pc".
-3. Victory/Kirana list: every Victory item is "pc", always. There are no weights. Use the invoice's own quantity as-is with unit "pc", even when the invoice's "per" column says Kgs or the item name contains a weight ("Sugar Chips 100 Gm", "Rice 1 Kg" — that is the pack size, not a unit). Never convert Victory quantities.
+1. Fruits, veggies and leafy lists each have a third column "Count or Weight": Count -> backend unit "pc"; Weight -> backend unit "kg". This column is the ONLY source of truth. Ignore any "1 Pc", "1 Kg", "250g" etc. written inside the item name.
+2. Victory/Kirana list (no unit column): every Victory item is "pc", always. There are no weights. Use the invoice's own quantity as-is with unit "pc", even when the invoice's "per" column says Kgs or the item name contains a weight ("Sugar Chips 100 Gm", "Rice 1 Kg" — that is the pack size, not a unit). Never convert Victory quantities.
 
 A fractional/decimal quantity (e.g. "25.5 kg") is completely normal for Weight items and is never a reason to invent a piece conversion.
 
@@ -79,6 +78,17 @@ MANUAL CONVERSION OVERRIDES (edit over time). Use a line ONLY when the message u
 - Raw Banana / Pachi Arati 1 Pc - Big : 2 gala (no size given, half of each gala) = 45 pc
 - Raw Banana / Pachi Arati 1 Pc - Small : 2 gala (no size given, half of each gala) = 55 pc
 - Tomatoes : 1 box = 23 kg
+- Any Apple : 1 box = 18 kg
+- Baby Apple : 1 box = 18 kg
+- Premium Royal Gala : 1 box = 18 kg
+- Royal Gala Apple : 1 box = 18 kg
+- Fuzi Apple : 1 box = 18 kg
+- Irani apple : 1 box = 18 kg
+- Turkey  Apple : 1 box = 18 kg
+- Pink Lady Apple : 1 box = 18 kg
+- Green Apple : 1 box = 18 kg
+- Red Delicious Apple : 1 box = 18 kg
+- Pomogranate : 1 box = 9 kg
 
 RAW BANANA GALA RULE: a Big gala is 45 pc and a Small gala is 55 pc. If the message says Big or Small, the WHOLE gala goes to that size (e.g. 2 Small galas = 110 pc of Small). If the message gives Raw Banana by the gala with NO size, split every gala half Big and half Small (50 pc per gala in total) into TWO items, "Raw Banana / Pachi Arati 1 Pc - Big" and "Raw Banana / Pachi Arati 1 Pc - Small", using whole pieces only: with N galas, Big = half of (N x 45) rounded UP, Small = (N x 50) minus Big, so the total stays exactly 50 per gala (use the lookup table below: 1 gala = 23 Big + 27 Small, 2 galas = 45 Big + 55 Small, 3 galas = 68 Big + 82 Small). Each item gets half of the line's money (e.g. a 1000 rs line gives line_total 500 to each of the two items; buying_price_per_unit is that line_total divided by that item's quantity, written as a number such as 21.74). Use the same message_text on both and add a warning "Raw Banana gala split half Big / half Small". If the message gives Raw Banana in plain PIECES with no size and no gala (e.g. "Raw Banana 55 pieces"), split the pieces half and half into the same TWO items: Big = P / 2 rounded UP to a whole number, Small = P minus Big (so the total stays exactly P), each item gets half of the line's money. If it gives plain kg (or anything else) with no size, do not guess a size: put the line in "unmatched_items" as ambiguous between Big and Small.
 
@@ -111,7 +121,7 @@ Fixed-weight box items — trust a stated kg figure or box count if given; if th
 
 | Item        | Box weight | Default (1 box) |
 |-------------|-----------|------------------|
-| Royal gala  | 18 kg     | 18 kg            |
+| Any apple variant (Any Apple, Baby Apple, Premium Royal Gala, Royal Gala Apple, Fuzi Apple, Irani apple, Turkey  Apple, Pink Lady Apple, Green Apple, Red Delicious Apple) | 18 kg     | 18 kg            |
 | Pomogranate | 9 kg      | 9 kg             |
 | Tomatoes    | 23 kg     | 23 kg            |
 

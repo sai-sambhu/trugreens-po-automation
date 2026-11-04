@@ -1,36 +1,68 @@
-Variation Name	Sku
-Alponso Mango	176
-Any Apple	1245522
-Baby Apple	1492
-Banganapalle Mango	171
-Blueberry 1 Box	109
-Cherry	1416
-Cheruku Rasalu Mango	174
-Daseri Mango	172
-Date Fruit	8002
-Green Apple	156
-Guava / Jama	113
-Himayat Mango	1245580
-Imported Avacado	108
-Imported Kiwi - Box of 3	1473
-Imported Oranges / Malta	103
-Jamoon / Neredukaya	160
-Karpuram Banana	119
-Local Banana	117
-Mandarin Orange	101
-Mango Kesari	1245588
-Mosambi	104
-Musk Melon / Karbuja	122
-Papaya	120
-Pears	124
-Pineapple Small 1 Pc	121
-Plums / Albakara	127
-Pomogranate	106
-Red Dragon Fruit 1 Pc	110
-Royal gala	151
-Sapota	105
-Special Banganapalle Mango	165
-Thai Guava	112
-Turkey  Apple	155
-Water Melon	116
-White Dragon Fruit 1 Pc	132
+Variation Name	Sku	Count or Weight
+wood apple	1245879	Weight
+Mango Kesari	1245588	Weight
+Chekkarakeli Banana	1245519	Weight
+Yellow Watermelon	1245513	Weight
+Ramafal	1245332	Weight
+Apple bear	1629	Weight
+Kinnows Orange	1559	Weight
+Persimmon 1 Pc	134	Count
+Baby Apple	1492	Weight
+Pedha Regu/Apple berry	1475	Weight
+Imported Kiwi - Box of 3	1473	Count
+Custard Apple / Seethaphal	133	Weight
+White Dragon Fruit 1 Pc	132	Count
+Sun Melon	131	Weight
+Kothapalli Mango	162	Weight
+Premium Royal Gala	158	Weight
+Red Grapes / Imported Grapes	129	Weight
+Mallika Mango	163	Weight
+Plums / Albakara	127	Weight
+Sweet aawla	128	Weight
+Jamoon / Neredukaya	160	Weight
+Special Banganapalle Mango	165	Weight
+Chinna Rasalu Mango	166	Weight
+Kobbari Mango	168	Weight
+Pedda Rasalu Mango	169	Weight
+Himayath Mango	167	Weight
+Thothapari Mango	164	Weight
+chekkaraguddi Mango	170	Weight
+Alponso Mango	176	Weight
+Cheruku Rasalu Mango	174	Weight
+Kesari Mango	177	Weight
+Sunderi Mango	173	Weight
+Neelam Mango	171	Weight
+Daseri Mango	172	Weight
+Red Banana	111	Weight
+Red Dragon Fruit 1 Pc	110	Count
+Blueberry 1 Box	109	Count
+Cherry	1416	Weight
+Fuzi Apple	157	Weight
+Imported Avacado	108	Count
+Local Avacado	107	Count
+Strawberry 1 Box	130	Count
+Irani apple	154	Weight
+Turkey  Apple	155	Weight
+Pears	124	Weight
+Pink Lady Apple	153	Weight
+Guava / Jama	113	Weight
+Mosambi	104	Weight
+Mango 	175	Weight
+Papaya	120	Weight
+Water Melon	116	Weight
+Local Orange	102	Weight
+Green Apple	156	Weight
+Sapota	105	Weight
+Imported Oranges / Malta	103	Weight
+Black Grapes 	114	Weight
+Pineapple 1 Pc	121	Count
+Local Kiwi - Piece of 3	123	Count
+Pomogranate	106	Weight
+Karpuram Banana	119	Weight
+Royal Gala Apple	151	Weight
+Green Grapes	115	Weight
+Mandarin Orange	101	Weight
+Red Delicious Apple	152	Weight
+Thai Guava	112	Weight
+Musk Melon / Karbuja	122	Weight
+Local Banana	117	Weight
