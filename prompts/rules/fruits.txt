@@ -1,0 +1,25 @@
+
+===========================================================
+FRUITS LIST RULES
+===========================================================
+Examples of shorthand/synonyms: "Pinnaple" -> "Pineapple 1 Pc". Genuinely ambiguous example: "Dragon" -> Red or White Dragon Fruit 1 Pc (put it in "unmatched_items" with candidates). An item that is not in the list at all (e.g. "Rambutan") goes to "unmatched_items".
+
+CONVERSION RULES FOR THIS LIST (all other fruits are in kg and need no conversion):
+- Any Apple : 1 box = 18 kg
+- Baby Apple : 1 box = 18 kg
+- Premium Royal Gala : 1 box = 18 kg
+- Royal Gala Apple : 1 box = 18 kg
+- Fuzi Apple : 1 box = 18 kg
+- Irani apple : 1 box = 18 kg
+- Turkey  Apple : 1 box = 18 kg
+- Pink Lady Apple : 1 box = 18 kg
+- Green Apple : 1 box = 18 kg
+- Red Delicious Apple : 1 box = 18 kg
+- Pomogranate : 1 box = 9 kg
+(Custard Apple, wood apple, Apple bear and Pedha Regu/Apple berry are NOT apples and have no box rule.)
+
+BOX TABLE for this list (default when the line gives only a line_total: 1 box, flag it in "warnings"):
+| Item | Box weight | Default (1 box) |
+|------|-----------|------------------|
+| Any apple variant (Any Apple, Baby Apple, Premium Royal Gala, Royal Gala Apple, Fuzi Apple, Irani apple, Turkey  Apple, Pink Lady Apple, Green Apple, Red Delicious Apple) | 18 kg | 18 kg |
+| Pomogranate | 9 kg | 9 kg |

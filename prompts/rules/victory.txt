@@ -1,0 +1,18 @@
+
+===========================================================
+VICTORY LIST RULES (Victory Bazars grocery / kirana)
+===========================================================
+VENDOR
+The vendor is always exactly "Victory" (the letterhead "Victory Bazars Private Limited" confirms it). Use "Victory" for every block.
+
+THE RECORD
+A Victory Bazars tax invoice, attached as a file (Excel, PDF or image) or pasted as text, read directly from its line-item table (Description of Goods, Quantity, Rate, per (unit), Amount) plus invoice date and Total line. One invoice = one delivery_date+vendor block. Follow the INVOICES section of the core rules for the footer numbers.
+
+UNITS — every Victory item is "pc", always. There are no weights. Use the invoice's own quantity as-is with unit "pc", even when the invoice's "per" column says Kgs or the item name contains a weight ("Sugar Chips 100 Gm", "Rice 1 Kg" — that is the pack size, not a unit). Never convert Victory quantities and never add unit_mismatches for them.
+
+MATCHING
+- MANDATORY FIRST STEP — DO THIS BEFORE ANYTHING ELSE, FOR EVERY LINE, NO EXCEPTIONS: items.txt's Kirana rows usually have "Victory" in front of them but the invoice does not — the invoice just says "Sugar Chips 100 Gm", but the items.txt row is "Victory Sugar Chips 100 Gm". So for every single line, before trying anything else, literally construct the string "Victory " + the line's item name and look that up in items.txt FIRST. This is not one option among several to consider later — it is the first and default lookup for every line, applied mechanically to all of them, not just the ones that "seem like" they need it. Only if THAT exact lookup fails do you move on to plain exact match, synonyms, bulk "Kg" naming and spelling drift. Some rows in items.txt have no "Victory" prefix at all (e.g. "Bansi Ravva 500Gm"): those are valid matches when no "Victory"-prefixed version exists.
+- BRAND PREFIX RULE (vendor-relative): when items.txt has more than one candidate for the same generic product (company-prefixed variants like "Victory X" / "Nutri X", and/or a plain unprefixed "X"), always pick the one that belongs to this invoice's vendor: "Victory X" over "Nutri X", over any other company's "X", over a plain unprefixed "X". Only fall back to a plain unprefixed "X" (or a different company's variant) when items.txt has no "Victory"-prefixed version for that product. Also check for bulk "...Kg" naming (e.g. bare "Toor Dal" -> "Victory Toor Dal Kg") and minor spelling drift within the same brand (e.g. "Wheat Ravva" -> "Victory Wheet Ravva 500Gm") before giving up.
+- LOOSE/BULK ITEMS MATCHING A PACKAGED-SOUNDING NAME: don't reject an items.txt entry just because its name implies a fixed package size (e.g. "Victory Ground Nuts 1 Kg") when the invoice line is sold loose by weight (e.g. "Groundnuts", 25 kg). The "1 Kg" in the catalog name is just how that SKU is labeled. Use that SKU and record the invoice's own quantity (e.g. 25) as "pc" (all Victory items are pieces).
+- On a Victory invoice, checklist step 1 is the "Victory " + name lookup above. Resolve the "retried_matches" method as "brand_prefix" for those.
+- APPLY THE BRAND PREFIX RULE TO EVERY LINE: if several lines in a row end up unmatched, re-check them against the brand prefix rule before finalizing — a cluster of misses is more likely inconsistent effort than a real cluster of missing items.

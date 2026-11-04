@@ -1,0 +1,17 @@
+
+===========================================================
+AASHIRWAAD LIST RULES (packaged goods: Aashirvaad, Sunfeast, Bingo, Mad Angles, Yippee, Dark Fantasy, bars and similar)
+===========================================================
+VENDOR
+The vendor is always exactly "Aashirwaad" (spelled with a "w", as in PosBytz). Use "Aashirwaad" for every block, even though many product names are spelled "Aashirvaad".
+
+THE RECORD
+Usually an invoice or order (Excel, PDF, image or pasted text), or a short WhatsApp-style message. Use the INVOICES section of the core rules when it is an invoice. One document = one delivery_date+vendor block.
+
+UNITS — every Aashirwaad item is "pc", always. There are no weights. Use the record's own quantity as-is with unit "pc", even when the record says Kg/Kgs or the item name contains a weight ("Aashirvaad Atta 1 kg", "Salt 1KG", "500g" — that is the pack size, not a unit). Never convert quantities and never add unit_mismatches for them.
+
+MATCHING
+- Item names in items.txt are the short names stored in PosBytz and are sometimes cut off or oddly spaced (for example "Yippee Magic Masala Noodl", "SFFarmlite Oatswtchocolate", "AASHIVD Salt 1KG"). Records usually use the full names. Match by brand + product + variant, ignoring spacing, capitalization and truncation.
+- Pack-price variants are DIFFERENT items: "RS.10" and "RS.20" in a name (for example "BINGO CHIPS RS.10 TOMATO" vs "Bingo! Chips RS.20 Tomato"), and different flavours or sizes (Tomato vs Chilli Sprinkled vs Cream & Onion, 500g vs 1 Kg) must never be mixed up. If the record does not say which variant, do not guess: put the line in "unmatched_items" with the candidates.
+- There is no "Victory" or other brand-prefix rule here. Look up each line by exact name first, then by brand + product + variant, then by spelling drift of the SAME product.
+- Retried_matches method for truncated or re-spelled names: "spelling_drift".

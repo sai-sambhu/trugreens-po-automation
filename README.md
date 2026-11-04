@@ -80,7 +80,7 @@ On macOS, the first time you open a `.command` file, right-click it and choose O
 
 ## Use
 
-1. Pick the item list: **Fruits**, **Veggies & leafy** or **Victory**. Only the list you pick is sent to the AI.
+1. Pick the tab: **Fruits**, **Veggies & leafy**, **Victory** or **Aashirwaad**. Only that tab's item list and prompt rules are sent to the AI. On the Fruits and Veggies tabs the vendor is read from the message (Kanchana Vegetables, Kanchana Fruits, Manoj). The Victory and Aashirwaad tabs always use their own vendor.
 2. Paste a message and/or attach files (Excel, PDF, Word `.docx`, or images: jpg, jpeg, png, webp). You can also copy a file or image and paste it with Cmd/Ctrl + V: a PDF or Excel copied in Finder/Explorer, a WhatsApp image, or a screenshot (on a Mac, Cmd + Ctrl + Shift + 4 copies a screenshot area). At least one message or file is required.
 3. Click **Convert & validate**.
 4. Fix anything shown in red and convert again. Red means the result is blocked and nothing is saved:
@@ -106,11 +106,14 @@ Run `commands/mac/update_code.command` or `commands/windows/update_code.bat`, or
 convert.html                       the UI
 src/create_purchase_order.py       Selenium automation
 prompts/
-  message_to_json_prompt.txt       system prompt sent to the AI
-  items_fruits.txt                 item list: fruits
-  items_veggies_leafy.txt          item list: veggies and leafy greens (columns: Variation Name, Sku, Count or Weight)
-  items_victory.txt                item list: Victory / kirana
-  chatgpt_promt.txt                short instruction for the ChatGPT website (not used by the page)
+  rules/                           prompt rules sent to the AI (a tab sends core.txt + its own files)
+    core.txt                         shared rules (output format, matching, totals)
+    produce_common.txt               shared rules for Fruits and Veggies (vendors, units, conversions)
+    fruits.txt  veggies.txt          rules for the Fruits and Veggies & leafy tabs
+    victory.txt  aashirwaad.txt      rules for the Victory and Aashirwaad tabs
+  items/                           item lists, one per tab
+    fruits.txt  veggies_leafy.txt  (columns: Variation Name, Sku, Count or Weight)
+    victory.txt  aashirwaad.txt    (columns: Variation Name, Sku; all pieces)
 commands/
   mac/                             double-click launchers for macOS (.command)
   windows/                         double-click launchers for Windows (.bat)
@@ -120,3 +123,9 @@ requirements.txt                   Python requirements
 ```
 
 Generated per run and git-ignored: `purchase_orders.json`.
+
+## Adding a tab (new vendor or list)
+
+1. Add the item list to `prompts/items/` (`Variation Name<tab>Sku`, plus `Count or Weight` if units vary).
+2. Add a rules file to `prompts/rules/` with that vendor's rules (vendor name, units, matching).
+3. Add one line to `TABS` near the top of the script in `convert.html`: label, list file, rules files (`core.txt` plus yours), and `vendor` / `pcOnly` if the tab belongs to one vendor and is all pieces. The tab button appears by itself.

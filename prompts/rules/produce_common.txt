@@ -1,0 +1,24 @@
+
+===========================================================
+PRODUCE RULES (fruits, veggies and leafy lists)
+===========================================================
+The record is usually a WhatsApp-style message (pasted text, or an attached screenshot/photo/PDF of one) and may contain several delivery_date+vendor blocks in one paste.
+
+VENDORS
+Exactly 3 valid vendor values: "Kanchana Vegetables", "Kanchana Fruits", "Manoj". Map the input to one of these. Only "Kanchana Vegetables" and "Kanchana Fruits" exist for Kanchana — never output plain "Kanchana". If the message says "fruits" or "vegetables"/"veg", use that. If it says only "Kanchana", decide from the items listed: all vegetables/greens/produce-veg -> "Kanchana Vegetables"; all fruits -> "Kanchana Fruits". If one Kanchana block mixes both, split it into two blocks (one per vendor, same date) and add a warning. These names must match PosBytz exactly. If it doesn't clearly match any, set "vendor": null and explain in "warnings" what the input actually said.
+
+UNIT HANDLING
+The unit of every item is fixed by the backend (DB). Take it from the item list's third column "Count or Weight" — never from the item's name, and never from what sounds natural in everyday English: Count -> backend unit "pc"; Weight -> backend unit "kg". This column is the ONLY source of truth. Ignore any "1 Pc", "1 Kg", "250g" etc. written inside the item name.
+
+A fractional/decimal quantity (e.g. "25.5 kg") is completely normal for Weight items and is never a reason to invent a piece conversion.
+
+When the unit written in the message differs from the item's backend unit (for example "4kg" for a Count item, or "10 pc" for a Weight item), resolve it like this:
+a. If THIS EXACT item is in MANUAL CONVERSION OVERRIDES below (never reuse one item's factor for another item, not even a similar one) -> convert with that factor, record the converted quantity and the backend unit, add a "unit_mismatches" entry with "conversion_source": "manual_override". This covers kg <-> pieces ("1 kg = 25 pc") and container units written in the message such as box, bag or gala ("1 box = 23 kg": 2 boxes of Tomatoes = 46 kg).
+b. If there is NO conversion rule for it -> do NOT estimate, guess or invent a factor, and NEVER just re-label the number: "5kg" of a Count item is NOT "5 pc", and "6pc" of a Weight item is NOT "6 kg". The "unit" you output must be the item's backend unit AND the quantity must really be in that unit; if you cannot get there with a rule above, the line goes to "unmatched_items" instead of "items". Put the line in "unmatched_items" with its line_total and a reason such as: "Unit mismatch: <item> is Count (pc) in the DB but the message gave kg, and there is no conversion rule for it." The user will then fix the message or add a rule. Leave "new_outliers_detected" empty.
+If the message unit already equals the backend unit, record it as-is; do NOT apply an override just because the item is listed there (Lemon has an override, but a message already giving pc needs no conversion).
+
+MANUAL CONVERSION OVERRIDES (edit over time; the rules for this list follow in the list-specific section). Use a line ONLY when the message unit differs from the item's backend unit; if the message already gives the backend unit, take it as-is and apply nothing. Line format: "- <exact item name> : <A> kg = <B> pc" or "- <exact item name> : <A> box|bag|gala = <B> pc|kg" (A units give B; so "7.8 kg = 10 pc" means 1 pc = 0.78 kg).
+
+QUANTITY DERIVATION — when the line doesn't give a usable quantity directly
+Derive per the rules below instead of reading a quantity off the line, and note how in "warnings" (it's inferred, not stated).
+Fixed-weight box items — trust a stated kg figure or box count if given; if the line gives only a line_total (neither), default to 1 box and flag it in "warnings". quantity = boxes × box weight when a box count is stated; = the stated kg figure when one is given directly; = box weight (1 box) when neither is given, e.g. a line "Pomogranate -2400" -> 9 kg, warning: "Pomogranate quantity assumed as 1 box x 9kg since only a line_total was given." The box weights are in the list-specific section.

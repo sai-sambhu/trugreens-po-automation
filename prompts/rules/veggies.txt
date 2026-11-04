@@ -1,0 +1,49 @@
+
+===========================================================
+VEGGIES AND LEAFY LIST RULES
+===========================================================
+Examples of shorthand/synonyms (Telugu/English): "Barta" -> "Brinjal Barta Purple / Purple Eggplant", "Snake guard" -> "Snake Gourd / Potlakaya 1 Pc", "Kakara" -> "Kakarakaya / Bitter Gourd", "Aa kakara" -> "Natu Aakakara".
+
+METHI RULE (check in this order): line contains "big" (any form) -> "Methi / Menthi - Big" (sku 1563). Else line contains "small" (any form, e.g. "small methi") -> "Microgreens Methi" (sku 98; "Microgreens" is only the brand name in PosBytz, vendors just say "small methi"). Otherwise plain "Methi"/"Menthi" with no size -> "Methi / Menthi - Small" (sku 89).
+
+CONVERSION RULES FOR THIS LIST (all other items need no conversion):
+- Lemon 1 Pc : 1 kg = 25 pc (user's actual vendor lemons; smaller than typical medium)
+- Drumstick 1 Pc : 1 kg = 15 pc
+- Spring Onion / Ulli Kadalu : 1 kg = 7 pc
+- Cauliflower 1 Pc : 1 bag = 10 pc
+- Cauliflower 1 Pc : 7.8 kg = 10 pc (a bag of 10 pc weighs 7.8 kg)
+- Raw Banana / Pachi Arati 1 Pc - Big : 1 gala = 45 pc
+- Raw Banana / Pachi Arati 1 Pc - Small : 1 gala = 55 pc
+- Raw Banana / Pachi Arati 1 Pc - Big : 2 gala (no size given, half of each gala) = 45 pc
+- Raw Banana / Pachi Arati 1 Pc - Small : 2 gala (no size given, half of each gala) = 55 pc
+- Tomatoes : 1 box = 23 kg
+- Sambar Onion 1Pc / 500gms : 0.5 kg = 1 pc (each piece is 500 gms)
+- Baby Potato 500gms : 0.5 kg = 1 pc (each piece is 500 gms)
+
+BOX TABLE for this list (default when the line gives only a line_total: 1 box, flag it in "warnings"):
+| Item | Box weight | Default (1 box) |
+|------|-----------|------------------|
+| Tomatoes | 23 kg | 23 kg |
+
+Fixed price-per-unit — quantity = line_total ÷ known unit price:
+- Curry leaves / Karvepaku: backend unit "pc", 4 rs/small bunch. quantity = round(line_total / 4). E.g. "Curry leaves - 100rs" -> 25 pc. Warning: "Curry leaves quantity derived as line_total / 4 rs per bunch, not stated directly."
+
+RAW BANANA GALA RULE: a Big gala is 45 pc and a Small gala is 55 pc. If the message says Big or Small, the WHOLE gala goes to that size (e.g. 2 Small galas = 110 pc of Small). If the message gives Raw Banana by the gala with NO size, split every gala half Big and half Small (50 pc per gala in total) into TWO items, "Raw Banana / Pachi Arati 1 Pc - Big" and "Raw Banana / Pachi Arati 1 Pc - Small", using whole pieces only: with N galas, Big = half of (N x 45) rounded UP, Small = (N x 50) minus Big, so the total stays exactly 50 per gala (use the lookup table below: 1 gala = 23 Big + 27 Small, 2 galas = 45 Big + 55 Small, 3 galas = 68 Big + 82 Small). Each item gets half of the line's money (e.g. a 1000 rs line gives line_total 500 to each of the two items; buying_price_per_unit is that line_total divided by that item's quantity, written as a number such as 21.74). Use the same message_text on both and add a warning "Raw Banana gala split half Big / half Small". If the message gives Raw Banana in plain PIECES with no size and no gala (e.g. "Raw Banana 55 pieces"), split the pieces half and half into the same TWO items: Big = P / 2 rounded UP to a whole number, Small = P minus Big (so the total stays exactly P), each item gets half of the line's money. If it gives plain kg (or anything else) with no size, do not guess a size: put the line in "unmatched_items" as ambiguous between Big and Small.
+
+WORKED CONVERSION EXAMPLES (follow these exactly):
+- "Lemon-1.5kg-200rs" (Lemon is pc, 25 pc per kg): 1.5 x 25 = 37.5, rounded to a whole piece = 38 pc. One item: quantity 38, unit "pc", line_total 200, buying_price_per_unit 5.26.
+- "Cauliflower-3kg-240rs" (Cauliflower is pc, 7.8 kg = 10 pc): 3 kg is about 4 pc (3 x 10 / 7.8 rounded to a whole piece). One item: quantity 4, unit "pc", line_total 240, buying_price_per_unit 60. (Do NOT use the bag figure for kg.)
+- "Cauliflower-2 bags-400rs": 2 bags x 10 = 20 pc. One item: quantity 20, unit "pc", line_total 400, buying_price_per_unit 20.
+- "Spring Onion-2.5kg-125rs": 2.5 x 7 = 17.5, rounded up = 18 pc. One item: quantity 18, line_total 125, buying_price_per_unit 6.94.
+- "Sambar onion 3 kg 420rs" (Sambar Onion 1Pc / 500gms is pc, each piece 500 gms): 3 kg / 0.5 kg = 6 pc. One item: quantity 6, unit "pc", line_total 420, buying_price_per_unit 70. "Baby aloo 3kg-150rs" (Baby Potato 500gms is pc, each piece 500 gms) -> 6 pc, line_total 150, buying_price_per_unit 25. If the message already gives pieces ("Baby aloo 2pc-40rs", "Sambar onion 6pc-420rs"), keep the pieces as written; any "per piece 500 gms" note in the message is only information.
+- "Tomato-2 box-1500rs": 2 x 23 = 46 kg. One item: quantity 46, unit "kg", line_total 1500, buying_price_per_unit 32.61.
+- "Raw Banana Small-2 gala-1400rs": 2 x 55 = 110 pc. One item "Raw Banana / Pachi Arati 1 Pc - Small": quantity 110, line_total 1400, buying_price_per_unit 12.73.
+- "Raw Banana-1 gala-1000rs" (no size) -> TWO items, both from the same message line:
+    1) "Raw Banana / Pachi Arati 1 Pc - Big": quantity 23, unit "pc", line_total 500, buying_price_per_unit 21.74
+    2) "Raw Banana / Pachi Arati 1 Pc - Small": quantity 27, unit "pc", line_total 500, buying_price_per_unit 18.52
+- "Raw Banana-3 gala-3000rs" (no size) -> TWO items: Big quantity 68 (half of 135 rounded up), line_total 1500, buying_price_per_unit 22.06; Small quantity 82 (150 - 68), line_total 1500, buying_price_per_unit 18.29.
+- "Raw Banana-55pc-1000rs" (pieces, no size) -> TWO items: Big quantity 28 (half of 55 rounded up), line_total 500, buying_price_per_unit 17.86; Small quantity 27 (55 - 28), line_total 500, buying_price_per_unit 18.52. "Raw Banana-40pc-800rs" -> Big 20 (line_total 400, price 20) + Small 20 (line_total 400, price 20).
+- RAW BANANA NO-SIZE GALA LOOKUP (do NOT calculate, copy the pair for the number of galas N; each of the two items gets half of the line money):
+    N=1: Big 23 + Small 27 | N=2: Big 45 + Small 55 | N=3: Big 68 + Small 82 | N=4: Big 90 + Small 110 | N=5: Big 113 + Small 137
+    N=6: Big 135 + Small 165 | N=7: Big 158 + Small 192 | N=8: Big 180 + Small 220 | N=9: Big 203 + Small 247 | N=10: Big 225 + Small 275
+    (above 10: Big = half of (N x 45) rounded up, Small = (N x 50) minus Big). Example: "Raw Banana-5 gala-5000rs" -> Big 113 pc with line_total 2500 (price 22.12) AND Small 137 pc with line_total 2500 (price 18.25).

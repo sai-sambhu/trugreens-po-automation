@@ -119,6 +119,10 @@
 
   .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
   #status { color: var(--muted); font-size: 14px; }
+  .spin { width: 18px; height: 18px; border: 2.5px solid var(--line-strong); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .8s linear infinite; flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
 
   /* result */
   .banner { display: flex; align-items: center; gap: 10px; border-radius: 10px; padding: 12px 14px; font-weight: 650; margin-bottom: 14px; }
@@ -185,11 +189,7 @@
 
     <div class="field">
       <span class="lbl">Item list sent to the AI</span>
-      <div class="seg">
-        <label><input type="radio" name="list" id="tickFruits"><span>Fruits</span></label>
-        <label><input type="radio" name="list" id="tickVeg" checked><span>Veggies &amp; leafy</span></label>
-        <label><input type="radio" name="list" id="tickVictory"><span>Victory</span></label>
-      </div>
+      <div class="seg" id="tabs"></div>
     </div>
 
     <div class="grid">
@@ -212,6 +212,7 @@
 
     <div class="actions">
       <button id="convertBtn" class="primary big" disabled>Convert &amp; validate</button>
+      <span id="spin" class="spin hidden" role="status" aria-label="Working"></span>
       <span id="status"></span>
     </div>
   </section>
@@ -251,19 +252,37 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script>
-const FILES = {
-  env: [".env"],
-  prompt: ["prompts", "message_to_json_prompt.txt"],
-  fruits: ["prompts", "items_fruits.txt"],
-  veggies: ["prompts", "items_veggies_leafy.txt"],
-  victory: ["prompts", "items_victory.txt"],
+const ENV_FILE = [".env"];
+// One entry per tab. Item lists are in prompts/items/ and prompt rules in prompts/rules/. The prompt sent to the AI is the rules files joined in order.
+//   list:    the item list for this tab
+//   rules:   prompt files (shared core + the rules for this kind of list)
+//   vendor:  fixed vendor for the whole tab (omit when the vendor is read from the message)
+//   pcOnly:  the list has no Count/Weight column and every item is pieces
+const TABS = {
+  fruits:     { label: "Fruits",          list: "fruits.txt",         rules: ["core.txt", "produce_common.txt", "fruits.txt"] },
+  veggies:    { label: "Veggies & leafy", list: "veggies_leafy.txt",  rules: ["core.txt", "produce_common.txt", "veggies.txt"] },
+  victory:    { label: "Victory",         list: "victory.txt",        rules: ["core.txt", "victory.txt"],    vendor: "Victory",    pcOnly: true },
+  aashirwaad: { label: "Aashirwaad",      list: "aashirwaad.txt",     rules: ["core.txt", "aashirwaad.txt"], vendor: "Aashirwaad", pcOnly: true },
 };
+const DEFAULT_TAB = "veggies";
 const OUTPUT = "purchase_orders.json";
 const PDF_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 const API_URL = "https://api.openai.com/v1/chat/completions";
 const $ = (id) => document.getElementById(id);
 
 let dir = null;
+
+// Build the tab buttons from TABS.
+Object.entries(TABS).forEach(([key, tab]) => {
+  const label = document.createElement("label");
+  const input = document.createElement("input");
+  input.type = "radio"; input.name = "list"; input.value = key; input.checked = key === DEFAULT_TAB;
+  const span = document.createElement("span");
+  span.textContent = tab.label;
+  label.append(input, span);
+  document.getElementById("tabs").appendChild(label);
+});
+const selectedTab = () => document.querySelector('input[name="list"]:checked').value;
 let attachments = [];
 
 /* ---------- remembered folder (IndexedDB) ---------- */
@@ -395,13 +414,13 @@ function todayISO() {
   return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
 }
 function parseJsonArray(raw) {
-  // The model sometimes writes a number as a formula ("line_total": 3000 / 2). Work out simple "a op b" values.
+  // The model sometimes writes a number as a formula ("line_total": 3000 / 2, "computed_total": 100 + 80 + 40).
+  // Work out plain number-and-operator chains; anything else is left alone and fails as invalid JSON.
   const cleaned = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, "").replace(
-    /(:\s*)(-?\d+(?:\.\d+)?)\s*([\/*+\-])\s*(-?\d+(?:\.\d+)?)(?=\s*[,}\n])/g,
-    (m, lead, x, op, y) => {
-      x = Number(x); y = Number(y);
-      const v = op === "/" ? x / y : op === "*" ? x * y : op === "+" ? x + y : x - y;
-      return lead + Math.round(v * 100) / 100;
+    /(:\s*)(-?\d+(?:\.\d+)?(?:\s*[\/*+\-]\s*-?\d+(?:\.\d+)?)+)(?=\s*[,}\n])/g,
+    (m, lead, expr) => {
+      if (!/^[\d.\s+\-*\/]+$/.test(expr)) return m;
+      try { return lead + Math.round(Function('"use strict"; return (' + expr + ")")() * 100) / 100; } catch { return m; }
     });
   let data = JSON.parse(cleaned);
   if (!Array.isArray(data)) {
@@ -453,14 +472,17 @@ function validate(orders, catalog, defaultUnit, overrides) {
         const expected = entry.unit || defaultUnit;
         if (expected && it.unit !== expected)
           bad(label, "Unit for " + entry.name + " (SKU " + sku + ") must be " + expected + " but the model gave " + it.unit + ".");
+        if (!entry.unit) return; // pieces-only lists: the record's quantity is used as written, no conversions
         // Message used another unit than the DB: only allowed for items with a rule in the prompt, and the maths must match.
         const key = entry.name.toLowerCase();
         const rules = overrides || { perKg: {}, perUnit: {} };
         const text = String(it.message_text || "");
-        const cont = text.match(/([\d.]+)\s*(box|boxes|bag|bags|gala)\b/i);
+        // Lists without a unit column (Victory) are all pc and never converted, so "1Kg" in an item name or "Kgs" in the per column is not a unit mismatch.
+        const converts = Boolean(entry.unit);
+        const cont = converts ? text.match(/([\d.]+)\s*(box|boxes|bag|bags|gala)\b/i) : null;
         const kgNum = (text.match(/([\d.]+)\s*(?:kgs?|kilos?)\b/i) || [])[1];
-        const pcNum = (text.match(/([\d.]+)\s*(?:pcs?|pieces?)\b/i) || [])[1];
-        const kgToPc = it.unit === "pc" && kgNum && !pcNum, pcToKg = it.unit === "kg" && pcNum && !kgNum;
+        const pcNum = (text.match(/([\d.]+)\s*(?:pcs?|pieces?|pacs?|packs?)\b/i) || [])[1];
+        const kgToPc = converts && it.unit === "pc" && kgNum && !pcNum, pcToKg = converts && it.unit === "kg" && pcNum && !kgNum;
         const check = (want, how) => {
           if (Math.abs(want - Number(it.quantity)) > 1)
             bad(label, "'" + text + "': quantity " + it.quantity + " " + it.unit + " does not match the rule (" + how + " gives about " + Math.round(want * 100) / 100 + ").");
@@ -745,18 +767,20 @@ $("convertBtn").addEventListener("click", async () => {
   const message = $("message").value.trim();
   const attached = attachments.slice();
   const status = (t) => ($("status").textContent = t);
-  const lists = [$("tickVictory").checked ? FILES.victory : $("tickFruits").checked ? FILES.fruits : FILES.veggies];
+  const tab = TABS[selectedTab()];
+  const lists = [["prompts", "items", tab.list]];
   if (!message && !attached.length) return status("Paste a message or attach a file.");
 
   $("convertBtn").disabled = true;
+  $("spin").classList.remove("hidden");
   $("next").classList.add("hidden");
   try {
     status("Reading project files…");
-    const env = parseEnv(await readText(FILES.env));
+    const env = parseEnv(await readText(ENV_FILE));
     const apiKey = env.OPENAI_API_KEY;
     if (!apiKey) throw new Error("OPENAI_API_KEY not found in .env");
     const model = env.OPENAI_MODEL || "gpt-4.1";
-    const systemPrompt = await readText(FILES.prompt);
+    const systemPrompt = (await Promise.all(tab.rules.map((f) => readText(["prompts", "rules", f])))).join("\n\n");
     const itemTexts = await Promise.all(lists.map(readText));
     // one header, then every selected list's rows
     const itemsText = [itemTexts[0].split(/\r?\n/)[0]]
@@ -786,7 +810,16 @@ $("convertBtn").addEventListener("click", async () => {
       throw new Error("Model output was cut off (finish_reason=length). The JSON would be partial.");
 
     const orders = parseJsonArray(choice.message.content);
-    const issues = validate(orders, loadCatalog(itemsText), $("tickVictory").checked ? "pc" : "", parseOverrides(systemPrompt));
+    // Tabs that belong to one vendor always use that vendor, whatever the model wrote.
+    const extra = [];
+    if (tab.vendor)
+      orders.forEach((o) => {
+        if (o.vendor !== tab.vendor) {
+          if (o.vendor) extra.push({ level: "warn", label: (o.delivery_date || "") + " / " + o.vendor, text: "Vendor set to " + tab.vendor + " for this tab (the model wrote " + o.vendor + ")." });
+          o.vendor = tab.vendor;
+        }
+      });
+    const issues = extra.concat(validate(orders, loadCatalog(itemsText), tab.pcOnly ? "pc" : "", parseOverrides(systemPrompt)));
     const clean = !issues.some((i) => i.level === "bad");
 
     if (clean) {
@@ -805,6 +838,7 @@ $("convertBtn").addEventListener("click", async () => {
     $("summary").innerHTML = "";
     $("raw").textContent = "";
   } finally {
+    $("spin").classList.add("hidden");
     updateButton();
   }
 });

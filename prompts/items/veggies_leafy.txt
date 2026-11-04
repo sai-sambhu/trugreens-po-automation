@@ -2,7 +2,6 @@ Variation Name	Sku	Count or Weight
 dilpasand	1245741	Count
 Sara Brinjal/ Sara Vankaya	1245544	Weight
 White Onion	1245521	Weight
-Sambar Onion	1245417	Count
 Garlic Peeled	1245413	Weight
 Kandi Kayalu	1628	Weight
 Thegalu 1 pc.	1627	Count
@@ -90,6 +89,8 @@ Ladys Finger / Bendakaya	8	Weight
 Yellow Pumkin / Gummadikaya	45	Weight
 Potato	3	Weight
 Coconut / Kobbarikaya 1 Pc	49	Count
+Flowers	5000	Weight
+Iceberg Lettuce	186	Weight
 
 Tella Galijeru	1245543	Count
 Aava Kura / Mustard Leaf - Small	1245391	Count

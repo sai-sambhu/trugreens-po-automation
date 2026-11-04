@@ -24,5 +24,8 @@ prompts/items.txt
 # failure screenshots from Selenium
 debug/
 
-# local backup of the item list
+# prompt leftovers the page never reads (kept locally only)
 prompts/*.backup.txt
+prompts/items.txt
+prompts/chatgpt_promt.txt
+prompts/old/
