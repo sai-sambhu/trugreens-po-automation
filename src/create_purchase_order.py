@@ -202,7 +202,7 @@ def main():
     add_multiple_items_tab = wait.until(EC.element_to_be_clickable((By.XPATH, ADD_MULTIPLE_ITEMS_TAB_XPATH)))
     safe_click(driver, add_multiple_items_tab)
 
-    for index, item in enumerate(purchase_order["items"]):
+    for index, item in enumerate(reversed(purchase_order["items"])):
         buying_price = item["buying_price_per_unit"]
 
         if index == 0:
