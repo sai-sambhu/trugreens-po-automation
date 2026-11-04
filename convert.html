@@ -128,6 +128,14 @@
   code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px;
     font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
 
+  .go { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; }
+  .go.ok { background: var(--ok-bg); color: var(--ok); }
+  .go.bad { background: var(--bad-bg); color: var(--bad); }
+  .go .mark { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none;
+    font-size: 26px; font-weight: 800; color: #fff; }
+  .go.ok .mark { background: var(--ok); } .go.bad .mark { background: var(--bad); }
+  .go-title { font-size: 17px; font-weight: 700; }
+  .go .muted { color: inherit; opacity: .85; font-size: 14px; }
   .pill { display: inline-block; }
   .muted { color: var(--muted); }
   .hidden { display: none !important; }
@@ -194,9 +202,15 @@
   </section>
 
   <section id="next" class="card hidden">
-    <div class="card-head"><span class="step">3</span><h2>Start Selenium</h2></div>
-    <p style="margin:0 0 14px"><code>purchase_orders.json</code> is saved. Double-click <code>run_selenium.command</code> (Mac) or <code>run_selenium.bat</code> (Windows) in the <code>commands</code> folder, or paste the command into Terminal.</p>
-    <div class="row" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <div class="card-head"><span class="step">3</span><h2>Selenium</h2></div>
+    <div id="go" class="go">
+      <div id="goMark" class="mark"></div>
+      <div>
+        <div id="goTitle" class="go-title"></div>
+        <div id="goText" class="muted"></div>
+      </div>
+    </div>
+    <div id="goActions" class="row" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px">
       <button id="copyBtn" class="primary">Copy run command</button>
       <code id="runCmd"></code>
     </div>
@@ -397,6 +411,20 @@ function validate(orders, catalog) {
   return issues;
 }
 
+/* ---------- go / no-go for Selenium ---------- */
+const isWin = /Win/i.test(navigator.platform);
+function showNext(ready) {
+  $("next").classList.remove("hidden");
+  $("go").className = "go " + (ready ? "ok" : "bad");
+  $("goMark").textContent = ready ? "\u2713" : "\u2715";
+  $("goTitle").textContent = ready ? "Ready: proceed to Selenium" : "Not ready: do not run Selenium";
+  $("goText").textContent = ready
+    ? "purchase_orders.json is saved. Double-click " + (isWin ? "run_selenium.bat" : "run_selenium.command") +
+      " in commands/" + (isWin ? "windows" : "mac") + ", or paste the command below."
+    : "Fix the issues above and convert again. Nothing was saved, so Selenium would use an older purchase_orders.json.";
+  $("goActions").classList.toggle("hidden", !ready);
+}
+
 /* ---------- rendering ---------- */
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const money = (n) => (n == null ? "" : Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 }));
@@ -414,7 +442,7 @@ function render(orders, issues, saved) {
   }
   $("issues").innerHTML = issues
     .map((i) => '<li class="' + i.level + '"><b>' + esc(i.label) + "</b>" + esc(i.text) + "</li>").join("");
-  $("next").classList.toggle("hidden", !saved);
+  showNext(saved);
 
   $("summary").innerHTML = orders.map((o) => {
     const rows = (o.items || []).map((it) =>
@@ -432,7 +460,9 @@ function render(orders, issues, saved) {
 
 /* ---------- run command ---------- */
 const pageDir = decodeURIComponent(location.pathname).replace(/\/[^/]*$/, "");
-const runCommand = 'bash "' + pageDir + '/commands/mac/run_selenium.command"';
+const runCommand = isWin
+  ? '"' + pageDir.replace(/^\//, "").replace(/\//g, "\\") + '\\commands\\windows\\run_selenium.bat"'
+  : 'bash "' + pageDir + '/commands/mac/run_selenium.command"';
 $("runCmd").textContent = runCommand;
 $("copyBtn").addEventListener("click", async () => {
   try {
@@ -554,6 +584,7 @@ $("convertBtn").addEventListener("click", async () => {
     $("result").classList.remove("hidden");
     $("banner").className = "banner bad";
     $("banner").textContent = "Failed: " + e.message;
+    showNext(false);
     $("issues").innerHTML = "";
     $("summary").innerHTML = "";
     $("raw").textContent = "";
