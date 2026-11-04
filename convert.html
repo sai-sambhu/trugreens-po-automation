@@ -195,7 +195,7 @@
 
   <section id="next" class="card hidden">
     <div class="card-head"><span class="step">3</span><h2>Start Selenium</h2></div>
-    <p style="margin:0 0 14px"><code>purchase_orders.json</code> is saved. Double-click <code>run_selenium.command</code> in the <code>commands</code> folder, or paste the command into Terminal.</p>
+    <p style="margin:0 0 14px"><code>purchase_orders.json</code> is saved. Double-click <code>run_selenium.command</code> (Mac) or <code>run_selenium.bat</code> (Windows) in the <code>commands</code> folder, or paste the command into Terminal.</p>
     <div class="row" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
       <button id="copyBtn" class="primary">Copy run command</button>
       <code id="runCmd"></code>
@@ -432,7 +432,7 @@ function render(orders, issues, saved) {
 
 /* ---------- run command ---------- */
 const pageDir = decodeURIComponent(location.pathname).replace(/\/[^/]*$/, "");
-const runCommand = 'bash "' + pageDir + '/commands/run_selenium.command"';
+const runCommand = 'bash "' + pageDir + '/commands/mac/run_selenium.command"';
 $("runCmd").textContent = runCommand;
 $("copyBtn").addEventListener("click", async () => {
   try {
