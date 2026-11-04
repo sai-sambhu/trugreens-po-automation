@@ -44,10 +44,22 @@ python3 --version        (Windows: py --version)
    git clone https://github.com/sai-sambhu/trugreens-po-automation.git
    cd trugreens-po-automation
    ```
-2. Create your `.env` from the template and fill in the values (no spaces around `=`, no quotes):
+2. Create your `.env` from the template and fill in the values (no spaces around `=`, no quotes).
+
+   Easiest: run the setup check. It creates `.env` from the template if it is missing and opens it for you (see "Setup check" below).
+
+   Or by hand. Windows (Command Prompt, in the project folder):
    ```
-   cp .env.example .env        (Windows: copy .env.example .env)
+   copy .env.example .env
+   notepad .env
    ```
+   macOS:
+   ```
+   cp .env.example .env
+   open -t .env
+   ```
+   Windows tip: Notepad and File Explorer won't create a file named `.env` from scratch (Notepad saves it as `.env.txt`), so always copy the template with the command above. If you must save from Notepad, set "Save as type" to "All files" and put the name in quotes: `".env"`.
+
    | Key | What it is |
    |---|---|
    | `OPENAI_API_KEY` | Your OpenAI API key (platform.openai.com → API keys; needs billing credits) |
@@ -57,7 +69,12 @@ python3 --version        (Windows: py --version)
 
    `.env` is git-ignored and never comes from git. Create it by hand on every machine and never commit it.
 3. Install the Python requirements: double-click `commands/mac/install_requirements.command` (Mac) or `commands/windows/install_requirements.bat` (Windows), or run `python3 -m pip install -r requirements.txt`.
-4. Open `convert.html` in Chrome or Edge and choose the project folder once. After a restart the browser asks you to reconnect the folder with one click.
+4. Run the setup check (below) to confirm everything is ready.
+5. Open `convert.html` in Chrome or Edge and choose the project folder once. After a restart the browser asks you to reconnect the folder with one click.
+
+### Setup check
+
+Double-click `commands/mac/setup_check.command` (Mac) or `commands/windows/setup_check.bat` (Windows). It checks Git, Python, Selenium, Chrome, that the folder is a git clone and up to date, and that `.env` exists with `OPENAI_API_KEY`, `POSBYTZ_EMAIL` and `POSBYTZ_PASSWORD` filled in. Anything missing is shown with the command to fix it. It never prints your secret values.
 
 On macOS, the first time you open a `.command` file, right-click it and choose Open. On Windows, SmartScreen may warn about a `.bat` file: click More info, then Run anyway.
 
@@ -95,7 +112,7 @@ prompts/
 commands/
   mac/                             double-click launchers for macOS (.command)
   windows/                         double-click launchers for Windows (.bat)
-    each folder has: run_selenium, install_requirements, update_code
+    each folder has: run_selenium, install_requirements, update_code, setup_check
 requirements.txt                   Python requirements
 .env.example                       template for .env
 ```
