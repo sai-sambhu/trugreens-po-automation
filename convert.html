@@ -215,6 +215,7 @@
       <span id="spin" class="spin hidden" role="status" aria-label="Working"></span>
       <span id="status"></span>
     </div>
+    <details id="logWrap" class="hidden"><summary>Log</summary><pre id="log"></pre></details>
   </section>
 
   <section id="result" class="card hidden">
@@ -337,7 +338,7 @@ function updateButton() {
 let pendingHandle = null;
 $("folderBtn").addEventListener("click", async () => {
   try {
-    if (pendingHandle && (await pendingHandle.requestPermission({ mode: "readwrite" })) === "granted") {
+    if (!dir && pendingHandle && (await pendingHandle.requestPermission({ mode: "readwrite" })) === "granted") {
       setFolder(pendingHandle, true);
       return;
     }
@@ -363,11 +364,26 @@ $("folderBtn").addEventListener("click", async () => {
 })();
 
 /* ---------- file helpers ---------- */
+// Step-by-step log shown under the Convert button (cleared on every run, opens by itself on a failure).
+function log(text) {
+  const t = new Date().toTimeString().slice(0, 8);
+  $("log").textContent += (t + "  " + text + "\n");
+}
+
 async function readText(path) {
-  let folder = dir;
-  for (const part of path.slice(0, -1)) folder = await folder.getDirectoryHandle(part);
-  const fh = await folder.getFileHandle(path[path.length - 1]);
-  return (await (await fh.getFile()).text()).trim();
+  try {
+    let folder = dir;
+    for (const part of path.slice(0, -1)) folder = await folder.getDirectoryHandle(part);
+    const fh = await folder.getFileHandle(path[path.length - 1]);
+    const text = (await (await fh.getFile()).text()).trim();
+    log("read " + path.join("/") + " (" + text.length + " characters)");
+    return text;
+  } catch (e) {
+    log("FAILED to read " + path.join("/") + " [" + e.name + ": " + e.message + "]");
+    if (e.name === "NotFoundError")
+      throw new Error("Can't find " + path.join("/") + " in the project folder (" + dir.name + "). Run git pull or the update_code file in commands/, or choose the right folder.");
+    throw e;
+  }
 }
 async function writeText(name, text) {
   const fh = await dir.getFileHandle(name, { create: true });
@@ -405,8 +421,13 @@ async function callOpenAI(apiKey, model, messages) {
     body: JSON.stringify({ model, messages }),
   });
   const body = await res.text();
-  if (!res.ok) throw new Error("OpenAI API error " + res.status + ": " + body);
-  return JSON.parse(body).choices[0];
+  if (!res.ok) {
+    log("OpenAI answered with an error, HTTP " + res.status);
+    throw new Error("OpenAI API error " + res.status + ": " + body);
+  }
+  const j = JSON.parse(body);
+  log("OpenAI replied: " + j.usage.prompt_tokens + " tokens in, " + j.usage.completion_tokens + " out, finish_reason " + j.choices[0].finish_reason);
+  return j.choices[0];
 }
 function todayISO() {
   const d = new Date();
@@ -774,7 +795,11 @@ $("convertBtn").addEventListener("click", async () => {
   $("convertBtn").disabled = true;
   $("spin").classList.remove("hidden");
   $("next").classList.add("hidden");
+  $("log").textContent = "";
+  $("logWrap").classList.remove("hidden");
+  $("logWrap").open = false;
   try {
+    log("tab: " + tab.label + " | list: items/" + tab.list + " | rules: " + tab.rules.join(", ") + (tab.vendor ? " | vendor fixed: " + tab.vendor : ""));
     status("Reading project files…");
     const env = parseEnv(await readText(ENV_FILE));
     const apiKey = env.OPENAI_API_KEY;
@@ -790,10 +815,22 @@ $("convertBtn").addEventListener("click", async () => {
     const attachedBlocks = [];
     const imageParts = [];
     for (const f of attached) {
-      if (isImage(f)) imageParts.push({ type: "image_url", image_url: { url: await imageToDataUrl(f), detail: "high" } });
-      else attachedBlocks.push("Attached file (" + f.name + ", converted to text):\n" + (await fileToText(f)));
+      try {
+        if (isImage(f)) {
+          imageParts.push({ type: "image_url", image_url: { url: await imageToDataUrl(f), detail: "high" } });
+          log("attachment " + f.name + " (" + Math.round(f.size / 1024) + " KB): image, resized and ready");
+        } else {
+          const text = await fileToText(f);
+          attachedBlocks.push("Attached file (" + f.name + ", converted to text):\n" + text);
+          log("attachment " + f.name + " (" + Math.round(f.size / 1024) + " KB): read " + text.length + " characters of text");
+        }
+      } catch (e) {
+        log("FAILED to read attachment " + f.name + " [" + e.name + ": " + e.message + "]");
+        throw new Error("Could not read the attachment '" + f.name + "' (" + (e.name === "NotFoundError" ? "the file was moved, renamed or is not fully downloaded; attach it again" : e.message) + ").");
+      }
     }
 
+    log("sending to " + model + ": prompt " + systemPrompt.length + " characters, " + (itemsText.split(/\r?\n/).length - 1) + " items, " + attached.length + " attachment(s)" + (message ? ", message typed" : ""));
     status("Asking " + model + "…");
     const userContent =
       "Today's date: " + todayISO() + " (use it to infer a missing year)\n\n" +
@@ -826,10 +863,13 @@ $("convertBtn").addEventListener("click", async () => {
       status("Saving…");
       await writeText(OUTPUT, JSON.stringify(orders, null, 2));
     }
+    log("result: " + orders.length + " order(s), " + issues.filter((i) => i.level === "bad").length + " blocking issue(s), " + issues.filter((i) => i.level === "warn").length + " warning(s)" + (clean ? "; saved purchase_orders.json" : "; NOT saved"));
     render(orders, issues, clean);
     status(clean ? "Done." : "Fix the prompt or message, then convert again.");
   } catch (e) {
     status("");
+    log("FAILED: " + e.name + ": " + e.message);
+    $("logWrap").open = true;
     $("result").classList.remove("hidden");
     $("banner").className = "banner bad";
     $("banner").textContent = "Failed: " + e.message;
