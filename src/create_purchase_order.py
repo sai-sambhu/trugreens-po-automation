@@ -128,6 +128,38 @@ def safe_click(driver, element, timeout=5):
             time.sleep(0.5)
 
 
+def click_item_result(driver, sku, timeout=20):
+    """Click the dropdown result whose SKU equals `sku`.
+
+    The result list re-renders while the search runs, so results are looked up again on every
+    attempt instead of holding an element across a re-render (that caused
+    StaleElementReferenceException). SKUs are compared as numbers because PosBytz pads them
+    inconsistently ("0005", "00029", "202"), and this avoids picking an item that merely contains
+    the same digits (searching 0005 also lists SKU 900005).
+    """
+    def normal(value):
+        return value.strip().lstrip("0") or "0"
+
+    options_xpath = (
+        "(//ul[contains(@class, 'select2-results__options')])[last()]"
+        "/li[contains(@class, 'select2-results__option')]"
+    )
+    wanted = normal(str(sku))
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            for option in driver.find_elements(By.XPATH, options_xpath):
+                match = re.search(r"SKU\s*:\s*(\S+)", option.get_attribute("textContent") or "")
+                if match and normal(match.group(1)) == wanted:
+                    safe_click(driver, option)
+                    return
+        except StaleElementReferenceException:
+            pass
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f"SKU {sku} did not appear in the item search results.")
+        time.sleep(0.3)
+
+
 def main():
     with open(PURCHASE_ORDERS_JSON_PATH) as f:
         data = json.load(f)
@@ -244,8 +276,7 @@ def main():
 
         time.sleep(2)
 
-        item_first_result = wait.until(EC.element_to_be_clickable((By.XPATH, SELECT2_FIRST_RESULT_XPATH)))
-        safe_click(driver, item_first_result)
+        click_item_result(driver, item_search_term)
 
         item_price_input = wait.until(EC.element_to_be_clickable((By.XPATH, ITEM_PRICE_INPUT_XPATH)))
         item_price_input.clear()
