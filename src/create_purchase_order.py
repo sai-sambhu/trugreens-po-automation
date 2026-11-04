@@ -47,28 +47,51 @@ PASSWORD_XPATH = "/html/body/div[2]/div/div[2]/div/div/div[3]/div/form/div[3]/di
 LOGIN_BUTTON_XPATH = "/html/body/div[2]/div/div[2]/div/div/div[3]/div/form/div[5]/button"
 
 NEW_PURCHASE_ORDER_XPATH = "/html/body/div[1]/div[2]/main/form/div/div[2]/a[2]"
-VENDOR_DROPDOWN_TOGGLE_XPATH = "/html/body/div[1]/div[2]/main/div[3]/div[2]/div/div/form/div[1]/div[1]/div/div/span/span[1]/span/span[2]/b"
-SHIP_TO_DROPDOWN_TOGGLE_XPATH = "/html/body/div[1]/div[2]/main/div[3]/div[2]/div/div/form/div[1]/div[2]/div/div/span/span[1]/span/span[2]/b"
+
+# The New Purchase Order form is addressed by stable ids/classes, not by position in the page.
+FORM = "//form[@id='js_purchase-order-form']"
+SELECT2_SELECTION = "/following-sibling::span[contains(@class, 'select2-container')]//span[contains(@class, 'select2-selection')]"
+VENDOR_DROPDOWN_TOGGLE_XPATH = FORM + "//select[contains(@class, 'js_po-vendor-select2')]" + SELECT2_SELECTION
+SHIP_TO_DROPDOWN_TOGGLE_XPATH = FORM + "//select[contains(@class, 'js_po-location-select2')]" + SELECT2_SELECTION
 SELECT2_SEARCH_INPUT_XPATH = "(//input[contains(@class, 'select2-search__field')])[last()]"
 SELECT2_FIRST_RESULT_XPATH = "(//ul[contains(@class, 'select2-results__options')])[last()]/li[contains(@class, 'select2-results__option')][1]"
 
-PO_DATE_INPUT_XPATH = "/html/body/div[1]/div[2]/main/div[3]/div[2]/div/div/form/div[1]/div[3]/div/div/input[1]"
-DATE_MONTH_SELECT_XPATH = "/html/body/div[1]/div[2]/main/div[3]/div[2]/div/div/form/div[8]/div[2]/div[1]/table/thead/tr[1]/th[2]/select[1]"
-DATE_YEAR_SELECT_XPATH = "/html/body/div[1]/div[2]/main/div[3]/div[2]/div/div/form/div[8]/div[2]/div[1]/table/thead/tr[1]/th[2]/select[2]"
-DATE_DAY_CELL_XPATH_TEMPLATE = "/html/body/div[1]/div[2]/main/div[3]/div[2]/div/div/form/div[8]/div[2]/div[1]/table/tbody//td[contains(@class, 'available') and normalize-space(text())='{day}']"
-APPLY_DATE_BUTTON_XPATH = "/html/body/div[1]/div[2]/main/div[3]/div[2]/div/div/form/div[8]/div[4]/button[2]"
+PO_DATE_INPUT_XPATH = FORM + "//input[contains(@class, 'js_delivery-date')]"
+DATE_PICKER = "(//div[contains(@class, 'daterangepicker') and contains(@style, 'block')])[last()]"
+DATE_MONTH_SELECT_XPATH = DATE_PICKER + "//select[contains(@class, 'monthselect')]"
+DATE_YEAR_SELECT_XPATH = DATE_PICKER + "//select[contains(@class, 'yearselect')]"
+DATE_DAY_CELL_XPATH_TEMPLATE = DATE_PICKER + "//td[contains(@class, 'available') and not(contains(@class, 'off')) and normalize-space(text())='{day}']"
+APPLY_DATE_BUTTON_XPATH = DATE_PICKER + "//button[contains(@class, 'applyBtn')]"
 
-CATEGORY_DROPDOWN_TOGGLE_XPATH = "/html/body/div[1]/div[2]/main/div[3]/div[2]/div/div/form/div[3]/div/div/span/span[1]/span/span[2]/b"
-ADD_ITEM_BUTTON_XPATH = "/html/body/div[1]/div[2]/main/div[3]/div[2]/div/div/form/div[6]/button"
+CATEGORY_DROPDOWN_TOGGLE_XPATH = FORM + "//select[contains(@class, 'js_po-category-select2')]" + SELECT2_SELECTION
+ADD_ITEM_BUTTON_XPATH = FORM + "//button[contains(@class, 'js_item-add')]"
 
 POPUP_COLLAPSE_XPATH = "/html/body/div[3]/div[2]/div/div[2]/span[2]/span[1]/span/span/span"
 
-ADD_MULTIPLE_ITEMS_TAB_XPATH = "/html/body/div[1]/div[2]/main/div[4]/div/div/div[1]/ul/li[3]/a"
+# "Add Items" tab of the item modal (quick add): pick item, price, qty, Add
+ADD_MULTIPLE_ITEMS_TAB_XPATH = "//div[@id='js_item-modal']//a[@href='#quick-add-items']"
+QUICK_ADD = "//div[@id='quick-add-items']//form[@id='po-quick-item-select-form']"
+ITEM_DROPDOWN_TOGGLE_XPATH = QUICK_ADD + "//select[contains(@class, 'js_select-inventory-item-v2')]" + SELECT2_SELECTION
+ITEM_PRICE_INPUT_XPATH = QUICK_ADD + "//input[contains(@class, 'js_item-buying-price')]"
+ITEM_QTY_INPUT_XPATH = QUICK_ADD + "//input[@id='js_purchase-qty']"
+ITEM_ADD_BUTTON_XPATH = "//button[@id='js_quick-list-add-item']"
 
-ITEM_DROPDOWN_TOGGLE_XPATH = "/html/body/div[1]/div[2]/main/div[4]/div/div/div[2]/div/div[3]/div[1]/div/div[1]/form/div[1]/div[1]/div/div/span/span[1]/span/span[2]/b"
-ITEM_PRICE_INPUT_XPATH = "/html/body/div[1]/div[2]/main/div[4]/div/div/div[2]/div/div[3]/div[1]/div/div[1]/form/div[1]/div[4]/div/div/input"
-ITEM_QTY_INPUT_XPATH = "/html/body/div[1]/div[2]/main/div[4]/div/div/div[2]/div/div[3]/div[1]/div/div[1]/form/div[1]/div[5]/div/div/input"
-ITEM_ADD_BUTTON_XPATH = "/html/body/div[1]/div[2]/main/div[4]/div/div/div[2]/div/div[3]/div[1]/div/div[1]/form/div[2]/div[2]/button"
+DRIVER = None
+
+
+def save_debug(driver):
+    """On failure, keep a screenshot and the page HTML so the broken step can be seen."""
+    folder = os.path.join(ROOT, "debug")
+    os.makedirs(folder, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    try:
+        driver.save_screenshot(os.path.join(folder, f"failure-{stamp}.png"))
+        with open(os.path.join(folder, f"failure-{stamp}.html"), "w", encoding="utf-8") as f:
+            f.write(driver.page_source)
+        print(f"Saved a screenshot and page HTML to {folder}")
+    except Exception as e:
+        print(f"Could not save debug files: {e}")
+
 
 def normalize_result_text(text):
     text = re.sub(r"^\d+\s+", "", text.strip())
@@ -115,6 +138,8 @@ def main():
     # options.add_argument("--headless=new")  # uncomment to run without a visible window
 
     driver = webdriver.Chrome(options=options)
+    global DRIVER
+    DRIVER = driver
     driver.get(LOGIN_URL)
 
     wait = WebDriverWait(
@@ -137,8 +162,11 @@ def main():
 
     time.sleep(5)
 
-    popup_collapse = wait.until(EC.element_to_be_clickable((By.XPATH, POPUP_COLLAPSE_XPATH)))
-    safe_click(driver, popup_collapse)
+    try:
+        popup_collapse = WebDriverWait(driver, 8).until(EC.element_to_be_clickable((By.XPATH, POPUP_COLLAPSE_XPATH)))
+        safe_click(driver, popup_collapse)
+    except Exception:
+        pass  # the popup is not always there
 
     new_po_button = wait.until(EC.element_to_be_clickable((By.XPATH, NEW_PURCHASE_ORDER_XPATH)))
     safe_click(driver, new_po_button)
@@ -237,4 +265,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        if DRIVER is not None:
+            save_debug(DRIVER)
+        raise

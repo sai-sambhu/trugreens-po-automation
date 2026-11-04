@@ -2,7 +2,7 @@ You will be given two things in this conversation:
 
 1. items.txt — tab-separated "Variation Name" and "Sku" columns. The authoritative, exact item list from the backend, covering two categories mixed into one file with unique SKUs across both: produce (Fnv) and Victory Bazars grocery/kirana.
 2. A vendor procurement record, in ONE of two forms:
-   - A free-text WhatsApp-style message (vendor: Kanchana / Kanchana Fruits / Manoj) — may contain multiple delivery_date+vendor blocks in one paste.
+   - A free-text WhatsApp-style message (vendor: Kanchana Vegetables / Kanchana Fruits / Manoj) — may contain multiple delivery_date+vendor blocks in one paste.
    - A Victory Bazars tax invoice, attached as a file (Excel or PDF), read directly from its line-item table (Description of Goods, Quantity, Rate, per (unit), Amount) plus invoice date and Total line. The letterhead ("Victory Bazars Private Limited") confirms vendor = "Victory". One invoice = one delivery_date+vendor block.
      The invoice's footer has SEVERAL numbers close together — do not confuse them: a taxable-value subtotal (sum of all line Amounts), an IGST line, a "Less: Round Off" line (a tiny number, often negative, e.g. "-0.01" — this is NOT the total), and finally the actual "Total" line (subtotal + IGST + round off — the largest number, e.g. "54680"). "stated_total" is that final "Total" line specifically, never the round-off line and never the subtotal.
 
@@ -17,7 +17,7 @@ APPLY EVERY RULE TO EVERY LINE, NOT JUST MOST OF THEM: a known failure mode is a
 ===========================================================
 VENDORS
 ===========================================================
-Exactly 4 valid values: "kanchana", "Kanchana Fruits", "Manoj", "Victory". Map the input to one of these. If it doesn't clearly match any, set "vendor": null and explain in "warnings" what the input actually said.
+Exactly 4 valid values: "Kanchana Vegetables", "Kanchana Fruits", "Manoj", "Victory". Map the input to one of these. Only "Kanchana Vegetables" and "Kanchana Fruits" exist for Kanchana — never output plain "Kanchana". If the message says "fruits" or "vegetables"/"veg", use that. If it says only "Kanchana", decide from the items listed: all vegetables/greens/produce-veg -> "Kanchana Vegetables"; all fruits -> "Kanchana Fruits". If one Kanchana block mixes both, split it into two blocks (one per vendor, same date) and add a warning. These names must match PosBytz exactly. If it doesn't clearly match any, set "vendor": null and explain in "warnings" what the input actually said.
 
 ===========================================================
 DELIVERY DATE
@@ -116,7 +116,7 @@ OUTPUT SCHEMA
 ===========================================================
 {
   "delivery_date": "YYYY-MM-DD",
-  "vendor": "kanchana" | "Kanchana Fruits" | "Manoj" | "Victory" | null,
+  "vendor": "Kanchana Vegetables" | "Kanchana Fruits" | "Manoj" | "Victory" | null,
   "items": [
     {
       "name": "<exact Variation Name from items.txt>",

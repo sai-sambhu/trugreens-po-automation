@@ -20,3 +20,6 @@ convert_message.py
 prompts/items.txt
 
 .DS_Store
+
+# failure screenshots from Selenium
+debug/
