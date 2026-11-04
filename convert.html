@@ -128,6 +128,13 @@
   code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px;
     font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
 
+  .update { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; background: var(--warn-bg); color: var(--warn);
+    border: 1px solid var(--warn); border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; font-size: 14px; }
+  .update .msg { flex: 1 1 320px; }
+  .update b { font-weight: 650; }
+  .update ul { margin: 6px 0 0; padding-left: 18px; }
+  .update button { background: transparent; color: inherit; border-color: currentColor; }
+  .update.note { background: var(--surface-2); color: var(--muted); border-color: var(--line); }
   .pill { display: inline-block; }
   .muted { color: var(--muted); }
   .hidden { display: none !important; }
@@ -150,6 +157,11 @@
     </div>
   </header>
   <span class="muted" id="folderHint">Pick the project folder (the one with .env and the prompts folder).</span>
+
+  <div id="update" class="update hidden">
+    <div class="msg" id="updateMsg"></div>
+    <button id="updateCopy" class="small">Copy update command</button>
+  </div>
 
   <section class="card">
     <div class="card-head"><span class="step">1</span><h2>Input</h2></div>
@@ -214,6 +226,8 @@ const FILES = {
   victory: ["prompts", "items_victory.txt"],
 };
 const OUTPUT = "purchase_orders.json";
+const REPO = "sai-sambhu/trugreens-po-automation";
+const BRANCH = "main";
 const PDF_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 const API_URL = "https://api.openai.com/v1/chat/completions";
 const $ = (id) => document.getElementById(id);
@@ -255,6 +269,7 @@ function setFolder(handle, granted) {
     $("folderDot").className = "dot ok";
     $("folderBtn").textContent = "Change folder";
     $("folderHint").textContent = "";
+    checkForUpdate();
   } else if (handle) {
     pill.textContent = "needs permission: " + handle.name;
     pill.className = "pill bad";
@@ -497,6 +512,57 @@ $("filesClear").addEventListener("click", () => {
   $("filesClear").classList.add("hidden");
   $("filesInfo").textContent = "Excel, PDF or Word (.docx)";
   updateButton();
+});
+
+/* ---------- update check (compares local git commit with GitHub) ---------- */
+async function readLocalSha() {
+  try {
+    const head = await readText([".git", "HEAD"]);
+    if (!head.startsWith("ref:")) return head;
+    const ref = head.slice(4).trim();
+    try {
+      return await readText([".git", ...ref.split("/")]);
+    } catch {
+      const packed = await readText([".git", "packed-refs"]);
+      const line = packed.split(/\r?\n/).find((l) => l.endsWith(" " + ref));
+      return line ? line.split(" ")[0] : null;
+    }
+  } catch { return null; }
+}
+function showUpdate(html, note) {
+  $("update").classList.remove("hidden");
+  $("update").classList.toggle("note", !!note);
+  $("updateMsg").innerHTML = html;
+  $("updateCopy").classList.toggle("hidden", !!note);
+}
+async function checkForUpdate() {
+  $("update").classList.add("hidden");
+  const sha = await readLocalSha();
+  if (!sha) return showUpdate("Can't check for updates: this folder isn't a git clone.", true);
+  try {
+    let token = "";
+    try { token = parseEnv(await readText(FILES.env)).GITHUB_TOKEN || ""; } catch {}
+    const res = await fetch("https://api.github.com/repos/" + REPO + "/compare/" + sha + "..." + BRANCH,
+      token ? { headers: { Authorization: "Bearer " + token } } : {});
+    if (!res.ok) return showUpdate("Couldn't check for updates (GitHub said " + res.status + ").", true);
+    const d = await res.json();
+    if (d.status === "ahead" || d.status === "diverged") {
+      const n = d.ahead_by;
+      const items = (d.commits || []).slice(-5).reverse()
+        .map((c) => "<li>" + esc(c.commit.message.split("\n")[0]) + "</li>").join("");
+      showUpdate("<b>New changes are available</b> (" + n + " new commit" + (n > 1 ? "s" : "") + " on GitHub). " +
+        "Double-click <code>update_code.command</code> in the project folder, then reload this page." +
+        (items ? "<ul>" + items + "</ul>" : ""));
+    }
+  } catch {
+    showUpdate("Couldn't check for updates (no internet?).", true);
+  }
+}
+$("updateCopy").addEventListener("click", async () => {
+  const cmd = 'bash "' + pageDir + '/update_code.command"';
+  try { await navigator.clipboard.writeText(cmd); $("updateCopy").textContent = "Copied"; }
+  catch { $("updateCopy").textContent = cmd; }
+  setTimeout(() => ($("updateCopy").textContent = "Copy update command"), 2500);
 });
 
 /* ---------- main ---------- */
