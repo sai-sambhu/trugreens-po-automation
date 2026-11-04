@@ -10,6 +10,15 @@ Usually an invoice or order (Excel, PDF, image or pasted text), or a short Whats
 
 UNITS — every Aashirwaad item is "pc", always. There are no weights. Use the record's own quantity as-is with unit "pc", even when the record says Kg/Kgs or the item name contains a weight ("Aashirvaad Atta 1 kg", "Salt 1KG", "500g" — that is the pack size, not a unit). Never convert quantities and never add unit_mismatches for them.
 
+READING THE ARVI MARKETING SERVICES INVOICE (the usual Aashirwaad invoice, often a photo: a tilted page, sometimes with handwritten tick marks over the quantities)
+- Columns of each row: Item Name / HSN, UOM (PAC), MRP, Rate, Qty, Gross Amt, Free, Disc%, Disc.Amt, Other Disc, Tot.Tax, Amount. Each item takes TWO printed lines: the item name with its numbers, and under it the HSN code with "Qty in SUOM".
+- "quantity" = the printed number in the Qty column (e.g. "15.00" = 15, "26.00" = 26). Handwritten ticks or circles drawn over it are NOT part of the number. NEVER use "Qty in SUOM" (e.g. "15.000000KG"): that is a total weight, not the quantity. Never use MRP, Rate or the HSN code as a quantity.
+- "line_total" = the LAST column "Amount" (the final, tax-inclusive amount of that row), never Gross Amt, Taxable Amt or Rate. buying_price_per_unit = line_total / quantity, rounded to 2 decimals.
+- delivery_date = the invoice's "Delivery Date". stated_total = "Net Amt Payable" (the rounded final total, e.g. 4430.00).
+- The page checks that the row Amounts add up to the invoice total (the figure beside "Total:" before the round-off, e.g. 4430.14, within about 1 rupee) and that the number of rows equals "No of Items Sold". Before you answer, add your line_totals and compare with that total, and count your rows against "No of Items Sold": if either differs, re-read the rows (quantity first, then amount) and fix them.
+- Row numbers (1, 2, 3...) at the start of a row are not quantities.
+- For every invoice row, set "message_text" to EXACTLY this form, with the numbers copied from that row: "<item name as printed> | Rate <Rate> | Qty <Qty> | Gross <Gross Amt> | Amount <Amount>" (for example "ASVDVERMICELLINONROASTED | Rate 39.12 | Qty 8.00 | Gross 313.00 | Amount 279.35"). The page multiplies Qty x Rate and compares it with Gross Amt, and compares Qty and Amount with your quantity and line_total, so every number in this text must be read carefully from the row, never guessed or taken from a neighbouring row.
+
 MATCHING
 - Item names in items.txt are the short names stored in PosBytz and are sometimes cut off or oddly spaced (for example "Yippee Magic Masala Noodl", "SFFarmlite Oatswtchocolate", "AASHIVD Salt 1KG"). Records usually use the full names. Match by brand + product + variant, ignoring spacing, capitalization and truncation.
 - Pack-price variants are DIFFERENT items: "RS.10" and "RS.20" in a name (for example "BINGO CHIPS RS.10 TOMATO" vs "Bingo! Chips RS.20 Tomato"), and different flavours or sizes (Tomato vs Chilli Sprinkled vs Cream & Onion, 500g vs 1 Kg) must never be mixed up. If the record does not say which variant, do not guess: put the line in "unmatched_items" with the candidates.

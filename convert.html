@@ -259,11 +259,12 @@ const ENV_FILE = [".env"];
 //   rules:   prompt files (shared core + the rules for this kind of list)
 //   vendor:  fixed vendor for the whole tab (omit when the vendor is read from the message)
 //   pcOnly:  the list has no Count/Weight column and every item is pieces
+//   checkTotal: the invoice line Amounts already include tax, so they must add up to the invoice total (blocks a misread row)
 const TABS = {
   fruits:     { label: "Fruits",          list: "fruits.txt",         rules: ["core.txt", "produce_common.txt", "fruits.txt"] },
   veggies:    { label: "Veggies & leafy", list: "veggies_leafy.txt",  rules: ["core.txt", "produce_common.txt", "veggies.txt"] },
   victory:    { label: "Victory",         list: "victory.txt",        rules: ["core.txt", "victory.txt"],    vendor: "Victory",    pcOnly: true },
-  aashirwaad: { label: "Aashirwaad",      list: "aashirwaad.txt",     rules: ["core.txt", "aashirwaad.txt"], vendor: "Aashirwaad", pcOnly: true },
+  aashirwaad: { label: "Aashirwaad",      list: "aashirwaad.txt",     rules: ["core.txt", "aashirwaad.txt"], vendor: "Aashirwaad", pcOnly: true, checkTotal: true },
 };
 const DEFAULT_TAB = "veggies";
 const OUTPUT = "purchase_orders.json";
@@ -466,7 +467,7 @@ function parseOverrides(promptText) {
   return { perKg, perUnit };
 }
 
-function validate(orders, catalog, defaultUnit, overrides) {
+function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
   const issues = [];
   const bad = (label, text) => issues.push({ level: "bad", label, text });
   const warn = (label, text) => issues.push({ level: "warn", label, text });
@@ -490,6 +491,20 @@ function validate(orders, catalog, defaultUnit, overrides) {
           warn(label, "SKU " + sku + " is '" + entry.name + "' in items.txt but the model named it '" + it.name + "'.");
         if (it.unit === "pc" && !Number.isInteger(Number(it.quantity)))
           bad(label, entry.name + ": pieces must be a whole number but the model gave " + it.quantity + ".");
+        if (rowCheck) {
+          // Invoice rows are echoed in message_text as "... | Rate R | Qty Q | Gross G | Amount A": Q x R must equal G.
+          const t = String(it.message_text || "");
+          const num = (k) => { const m = t.match(new RegExp(k + "\\s*[:=]?\\s*([\\d,]*\\.?\\d+)", "i")); return m ? Number(m[1].replace(/,/g, "")) : null; };
+          const R = num("Rate"), Q = num("Qty"), G = num("Gross"), A = num("Amount");
+          if (R == null || Q == null || G == null || A == null)
+            bad(label, entry.name + ": the row text is missing its Rate, Qty, Gross or Amount, so it can't be verified: '" + t.slice(0, 80) + "'.");
+          else {
+            if (Q !== Number(it.quantity)) bad(label, entry.name + ": quantity " + it.quantity + " does not match the row's Qty " + Q + ".");
+            if (Math.abs(A - Number(it.line_total)) > 0.015) bad(label, entry.name + ": line total " + it.line_total + " does not match the row's Amount " + A + ".");
+            if (Math.abs(Q * R - G) > Math.max(1, 0.01 * G))
+              bad(label, entry.name + ": Qty " + Q + " x Rate " + R + " = " + Math.round(Q * R * 100) / 100 + " but Gross is " + G + ". The quantity or the rate was misread; check this row.");
+          }
+        }
         const expected = entry.unit || defaultUnit;
         if (expected && it.unit !== expected)
           bad(label, "Unit for " + entry.name + " (SKU " + sku + ") must be " + expected + " but the model gave " + it.unit + ".");
@@ -768,6 +783,27 @@ document.addEventListener("paste", (e) => {
 });
 
 // Shrink big photos/screenshots so the request stays small, and re-encode as JPEG.
+// A tall photo (an invoice, a screenshot) is also sent as six zoomed, overlapping strips (top to bottom),
+// because small print and handwritten ticks are misread when the whole page is one low-resolution picture.
+async function imageToParts(file, maxSide = 2000) {
+  const parts = [await imageToDataUrl(file, maxSide)];
+  let bmp;
+  try { bmp = await createImageBitmap(file); } catch { return parts; }
+  if (bmp.height < bmp.width * 1.25) return parts;
+  const scale = Math.min(2.5, 2000 / bmp.width);
+  for (const start of [0, 0.15, 0.3, 0.45, 0.6, 0.75]) {
+    const y = Math.round(bmp.height * start), h = Math.min(Math.round(bmp.height * 0.25), bmp.height - y);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * scale);
+    canvas.height = Math.round(h * scale);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bmp, 0, y, bmp.width, h, 0, 0, canvas.width, canvas.height);
+    parts.push(canvas.toDataURL("image/jpeg", 0.92));
+  }
+  return parts;
+}
 async function imageToDataUrl(file, maxSide = 2000) {
   let bitmap;
   try { bitmap = await createImageBitmap(file); }
@@ -814,11 +850,14 @@ $("convertBtn").addEventListener("click", async () => {
     status("Reading attachments…");
     const attachedBlocks = [];
     const imageParts = [];
+    let zoomed = false;
     for (const f of attached) {
       try {
         if (isImage(f)) {
-          imageParts.push({ type: "image_url", image_url: { url: await imageToDataUrl(f), detail: "high" } });
-          log("attachment " + f.name + " (" + Math.round(f.size / 1024) + " KB): image, resized and ready");
+          const urls = await imageToParts(f);
+          urls.forEach((u) => imageParts.push({ type: "image_url", image_url: { url: u, detail: "high" } }));
+          if (urls.length > 1) zoomed = true;
+          log("attachment " + f.name + " (" + Math.round(f.size / 1024) + " KB): image, sent as the full picture" + (urls.length > 1 ? " plus " + (urls.length - 1) + " zoomed strips" : ""));
         } else {
           const text = await fileToText(f);
           attachedBlocks.push("Attached file (" + f.name + ", converted to text):\n" + text);
@@ -837,7 +876,7 @@ $("convertBtn").addEventListener("click", async () => {
       "items.txt:\n" + itemsText + "\n\n" +
       (message ? "Vendor procurement message:\n" + message + "\n\n" : "") +
       attachedBlocks.map((b) => b + "\n\n").join("") +
-      (imageParts.length ? "Attached image(s): " + imageParts.length + ", shown after this text. Read the text in them as the vendor message or invoice.\n\n" : "") +
+      (imageParts.length ? "Attached image(s): " + imageParts.length + ", shown after this text. Read the text in them as the vendor message or invoice." + (zoomed ? " A tall picture is shown first as the full page, then as 6 zoomed strips (top to bottom) that overlap by half: use the zoomed strips to read small print, handwritten marks and numbers, and count each row only once even if it appears in two strips." : "") + "\n\n" : "") +
       "Convert everything in one pass. Output only the JSON array.";
     const choice = await callOpenAI(apiKey, model, [
       { role: "system", content: systemPrompt },
@@ -856,7 +895,13 @@ $("convertBtn").addEventListener("click", async () => {
           o.vendor = tab.vendor;
         }
       });
-    const issues = extra.concat(validate(orders, loadCatalog(itemsText), tab.pcOnly ? "pc" : "", parseOverrides(systemPrompt)));
+    const issues = extra.concat(validate(orders, loadCatalog(itemsText), tab.pcOnly ? "pc" : "", parseOverrides(systemPrompt), !!tab.checkTotal));
+    if (tab.checkTotal)
+      orders.forEach((o) => {
+        if (o.stated_total != null && !(o.unmatched_items || []).length && Math.abs(o.computed_total - o.stated_total) > 2)
+          issues.push({ level: "bad", label: (o.delivery_date || "") + " / " + (o.vendor || ""),
+            text: "The line amounts add up to " + o.computed_total + " but the invoice total is " + o.stated_total + ". At least one row (quantity or amount) was misread; check the rows against the invoice." });
+      });
     const clean = !issues.some((i) => i.level === "bad");
 
     if (clean) {
