@@ -9,7 +9,35 @@ Everything runs locally. The only outside calls are to OpenAI and PosBytz (the p
 
 ## Setup on a new machine
 
-Needs Python 3, Git and Google Chrome. On Windows, install Git with `winget install --id Git.Git -e` and Python with `winget install --id Python.Python.3.12 -e`.
+### Prerequisites
+
+You need Git, Python 3 and Google Chrome.
+
+**Windows** (PowerShell or Command Prompt). Close and reopen the terminal after installing:
+```
+winget install --id Git.Git -e --source winget
+winget install --id Python.Python.3.12 -e --source winget
+winget install --id Google.Chrome -e --source winget
+```
+If `winget` isn't available, download the installers from https://git-scm.com/download/win, https://www.python.org/downloads/ and https://www.google.com/chrome/.
+
+**macOS** (Terminal). This installs Git and Python 3 with Apple's command line tools:
+```
+xcode-select --install
+```
+Or, with Homebrew:
+```
+brew install git python
+brew install --cask google-chrome
+```
+
+**Check the installs:**
+```
+git --version
+python3 --version        (Windows: py --version)
+```
+
+### Steps
 
 1. Clone the repo:
    ```
