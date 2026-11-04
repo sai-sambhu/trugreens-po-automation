@@ -403,7 +403,7 @@ function validate(orders, catalog) {
     (o.unmatched_items || []).forEach((u) =>
       bad(label, "Unmatched: " + u.message_text + ". " + (u.reason || "")));
     (o.unit_mismatches || []).forEach((m) =>
-      bad(label, "Unit mismatch: " + m.item + " (backend " + m.backend_unit + ", message said " + m.message_unit + ", '" + m.message_text + "') converted to " + m.converted_quantity + " via " + m.conversion_factor + "."));
+      warn(label, "Unit mismatch: " + m.item + " (backend " + m.backend_unit + ", message said " + m.message_unit + ", '" + m.message_text + "') converted to " + m.converted_quantity + " via " + m.conversion_factor + "."));
     (o.new_outliers_detected || []).forEach((n) =>
       warn(label, "New estimated conversion: " + n.item + " at " + n.conversion_factor + "."));
     (o.warnings || []).forEach((w) => warn(label, w));
