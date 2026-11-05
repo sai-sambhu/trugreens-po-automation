@@ -9,7 +9,7 @@ Kinnows Orange	1559	Weight
 Persimmon 1 Pc	134	Count
 Baby Apple	1492	Weight
 Pedha Regu/Apple berry	1475	Weight
-Imported Kiwi - Box of 3	1473	Count
+Imported Kiwi - Box	1473	Count
 Custard Apple / Seethaphal	133	Weight
 White Dragon Fruit	132	Weight
 Sun Melon	131	Weight
