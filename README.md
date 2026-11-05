@@ -84,8 +84,9 @@ On macOS, the first time you open a `.command` file, right-click it and choose O
 
 1. Pick the tab: **Fruits**, **Veggies & leafy**, **Victory** or **Aashirwaad**. Only that tab's item list and prompt rules are sent to the AI. On the Fruits and Veggies tabs the vendor is read from the message (Kanchana Vegetables, Kanchana Fruits, Manoj). The Victory and Aashirwaad tabs always use their own vendor.
 2. Paste a message and/or attach files (Excel, PDF, Word `.docx`, or images: jpg, jpeg, png, webp). You can also copy a file or image and paste it with Cmd/Ctrl + V: a PDF or Excel copied in Finder/Explorer, a WhatsApp image, or a screenshot (on a Mac, Cmd + Ctrl + Shift + 4 copies a screenshot area). At least one message or file is required.
-3. Click **Convert & validate**.
-4. Fix anything shown in red and convert again. Red means the result is blocked and nothing is saved:
+3. Pick the **Model** if you want: **GPT-4.1** (default, most accurate), **GPT-4.1 mini** (about 5 times cheaper) or **Auto** (mini only for short Fruits/Veggies text; pictures, long inputs, Victory and Aashirwaad use GPT-4.1). A picture always uses GPT-4.1. The Log shows which model ran.
+4. Click **Convert & validate**.
+5. Fix anything shown in red and convert again. Red means the result is blocked and nothing is saved:
    - unmatched items
    - unit mismatches
    - a SKU that isn't in the item list
@@ -94,7 +95,7 @@ On macOS, the first time you open a `.command` file, right-click it and choose O
    - more than one order in a single run (Selenium only enters the first)
 
    Amber warnings (total mismatch, name differences, estimated conversions, model warnings) don't block.
-5. When it says "No issues", `purchase_orders.json` is saved. Double-click `commands/mac/run_selenium.command` (Mac) or `commands/windows/run_selenium.bat` (Windows). On a Mac you can also use the **Copy run command** button and paste it into Terminal. Chrome opens, logs in to PosBytz and fills the purchase order. Review it before saving.
+6. When it says "No issues", `purchase_orders.json` is saved. Double-click `commands/mac/run_selenium.command` (Mac) or `commands/windows/run_selenium.bat` (Windows). On a Mac you can also use the **Copy run command** button and paste it into Terminal. Chrome opens, logs in to PosBytz and fills the purchase order. Review it before saving.
 
 Editing the prompt or item lists takes effect on the next convert, with no code change. The page reads them from `prompts/` every time.
 

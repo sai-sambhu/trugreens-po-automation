@@ -117,7 +117,10 @@
   button:disabled { opacity: .45; cursor: not-allowed; }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .modelrow { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .modelrow .lbl { margin: 0; }
+  .modelhint { color: var(--muted); font-size: 13px; flex: 1 1 260px; }
+  .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 16px; }
   #status { color: var(--muted); font-size: 14px; }
   .spin { width: 18px; height: 18px; border: 2.5px solid var(--line-strong); border-top-color: var(--accent);
     border-radius: 50%; animation: spin .8s linear infinite; flex: none; }
@@ -210,6 +213,16 @@
       </div>
     </div>
 
+    <div class="modelrow">
+      <span class="lbl">Model</span>
+      <div class="seg" id="modelSeg">
+        <label><input type="radio" name="model" value="strong" checked><span>GPT-4.1</span></label>
+        <label><input type="radio" name="model" value="mini"><span>GPT-4.1 mini</span></label>
+        <label><input type="radio" name="model" value="auto"><span>Auto</span></label>
+      </div>
+      <span class="modelhint" id="modelHint"></span>
+    </div>
+
     <div class="actions">
       <button id="convertBtn" class="primary big" disabled>Convert &amp; validate</button>
       <span id="spin" class="spin hidden" role="status" aria-label="Working"></span>
@@ -267,6 +280,7 @@ const TABS = {
   aashirwaad: { label: "Aashirwaad",      list: "aashirwaad.txt",     rules: ["core.txt", "aashirwaad.txt"], vendor: "Aashirwaad", pcOnly: true, checkTotal: true },
 };
 const DEFAULT_TAB = "veggies";
+const AUTO_MAX_ROWS = 20; // Auto: at most this many lines of text still counts as short
 const OUTPUT = "purchase_orders.json";
 const PDF_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 const API_URL = "https://api.openai.com/v1/chat/completions";
@@ -335,6 +349,17 @@ function updateButton() {
   const hasInput = $("message").value.trim() || attachments.length;
   $("convertBtn").disabled = !dir || !hasInput;
 }
+
+const selectedModel = () => document.querySelector('input[name="model"]:checked').value;
+const MODEL_HINTS = {
+  strong: "Most accurate. Used for everything.",
+  mini: "About 5 times cheaper. A picture still uses GPT-4.1.",
+  auto: "Small model only for short Fruits/Veggies text. Pictures, long inputs, Victory and Aashirwaad use GPT-4.1.",
+};
+function showModelHint() { $("modelHint").textContent = MODEL_HINTS[selectedModel()]; }
+try { const m = localStorage.getItem("modelChoice"); const r = m && document.querySelector('input[name="model"][value="' + m + '"]'); if (r) r.checked = true; } catch (_) {}
+document.querySelectorAll('input[name="model"]').forEach((r) => r.addEventListener("change", () => { try { localStorage.setItem("modelChoice", selectedModel()); } catch (_) {} showModelHint(); }));
+showModelHint();
 
 let pendingHandle = null;
 $("folderBtn").addEventListener("click", async () => {
@@ -959,9 +984,21 @@ $("convertBtn").addEventListener("click", async () => {
       }
     }
 
-    // gpt-4.1 for everything by default. In .env, OPENAI_MODEL_TEXT (typed message, Excel, PDF, Word) and OPENAI_MODEL_IMAGE (a picture is attached) can each pick another model.
-    const model = (imageParts.length ? env.OPENAI_MODEL_IMAGE : env.OPENAI_MODEL_TEXT) || env.OPENAI_MODEL || "gpt-4.1";
-    log("sending to " + model + (imageParts.length ? " (picture attached)" : " (text only)") + ": prompt " + systemPrompt.length + " characters, " + (itemsText.split(/\r?\n/).length - 1) + " items, " + attached.length + " attachment(s)" + (message ? ", message typed" : ""));
+    // Model choice from the dropdown. Strong = gpt-4.1 (or .env OPENAI_MODEL), mini = gpt-4.1-mini (or .env OPENAI_MODEL_MINI).
+    // A picture always uses the strong model (.env OPENAI_MODEL_IMAGE can change that). Auto picks mini only for short Fruits/Veggies text.
+    const strongModel = env.OPENAI_MODEL || "gpt-4.1", miniModel = env.OPENAI_MODEL_MINI || "gpt-4.1-mini";
+    const pick = selectedModel();
+    const textRows = [message].concat(attachedBlocks).join("\n").split(/\r?\n/).filter((l) => l.trim()).length;
+    let model, why;
+    if (imageParts.length) { model = env.OPENAI_MODEL_IMAGE || strongModel; why = "picture attached"; }
+    else if (pick === "mini") { model = miniModel; why = "you chose mini"; }
+    else if (pick === "auto") {
+      const small = (selectedTab() === "fruits" || selectedTab() === "veggies") && textRows <= AUTO_MAX_ROWS;
+      model = small ? miniModel : strongModel;
+      why = small ? "auto: short " + tab.label + " text, " + textRows + " lines" : "auto: " + (selectedTab() !== "fruits" && selectedTab() !== "veggies" ? tab.label + " tab" : textRows + " lines is long");
+    } else { model = strongModel; why = "you chose GPT-4.1"; }
+    log("model: " + model + " (" + why + ")");
+    log("sending to " + model + ": prompt " + systemPrompt.length + " characters, " + (itemsText.split(/\r?\n/).length - 1) + " items, " + attached.length + " attachment(s)" + (message ? ", message typed" : ""));
     status("Asking " + model + "…");
     const userContent =
       "Today's date: " + todayISO() + " (use it to infer a missing year)\n\n" +
