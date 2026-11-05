@@ -29,3 +29,4 @@ prompts/*.backup.txt
 prompts/items.txt
 prompts/chatgpt_promt.txt
 prompts/old/
+prompts_backup_*/

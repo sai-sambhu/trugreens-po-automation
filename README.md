@@ -64,6 +64,8 @@ python3 --version        (Windows: py --version)
    |---|---|
    | `OPENAI_API_KEY` | Your OpenAI API key (platform.openai.com → API keys; needs billing credits) |
    | `OPENAI_MODEL` | Optional. Model ID; defaults to `gpt-4.1` |
+| `OPENAI_MODEL_TEXT` | Optional. Model for text only (typed message, Excel, PDF, Word). Falls back to `OPENAI_MODEL`. `gpt-4.1-mini` is about 5 times cheaper but can make rare wrong matches on long invoices |
+| `OPENAI_MODEL_IMAGE` | Optional. Model when a picture is attached. Falls back to `OPENAI_MODEL` |
    | `POSBYTZ_EMAIL` | PosBytz login email |
    | `POSBYTZ_PASSWORD` | PosBytz login password |
 

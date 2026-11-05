@@ -500,11 +500,13 @@ function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
     if (!o.vendor) bad(label, "Vendor is null, the automation needs one.");
     if (!o.delivery_date) bad(label, "Delivery date is missing.");
 
+    const convWords = [];
     (o.items || []).forEach((it) => {
       const sku = String(it.sku);
       if (!(sku in catalog)) bad(label, "SKU " + sku + " (" + it.name + ") is not in items.txt.");
       else {
         const entry = catalog[sku];
+        it.unit = entry.unit || defaultUnit || it.unit; // the list decides the unit, not the model
         if (entry.name !== String(it.name || "").trim())
           warn(label, "SKU " + sku + " is '" + entry.name + "' in items.txt but the model named it '" + it.name + "'.");
         if (it.unit === "pc" && !Number.isInteger(Number(it.quantity)))
@@ -545,6 +547,15 @@ function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
         const gNum = sumOf(/([\d.]+)\s*(?:grams?|gms?|g)\b/gi);
         if (converts && it.unit === "pc" && gNum && !kgNum && !pcNum && !cont)
           bad(label, "'" + text + "': " + entry.name + " is counted in pieces but the message gave grams, and there is no conversion rule for it.");
+        // Several quantities in one row's text ("4kg,5kg" or a merged "A + B"): the entered quantity must be their sum.
+        if (defaultUnit !== "pc") {
+          const kgAll = [...text.matchAll(/([\d.]+)\s*(?:kgs?|kilos?)\b/gi)], pcAll = [...text.matchAll(/([\d.]+)\s*(?:pcs?|pieces?)\b/gi)];
+          const sumKg = kgAll.reduce((t, m) => t + Number(m[1]), 0), sumPc = pcAll.reduce((t, m) => t + Number(m[1]), 0);
+          if (it.unit === "kg" && kgAll.length > 1 && !pcAll.length && Math.abs(sumKg - Number(it.quantity)) > 0.01)
+            bad(label, "'" + text + "': the quantities in the text add up to " + sumKg + " kg but " + it.quantity + " kg was entered for " + entry.name + ".");
+          if (it.unit === "pc" && pcAll.length > 1 && !kgAll.length && Math.abs(sumPc - Number(it.quantity)) > 0.01)
+            bad(label, "'" + text + "': the quantities in the text add up to " + sumPc + " pc but " + it.quantity + " pc was entered for " + entry.name + ".");
+        }
         const kgToPc = converts && it.unit === "pc" && kgNum && !pcNum, pcToKg = converts && it.unit === "kg" && pcNum && !kgNum;
         const check = (want, how) => {
           if (Math.abs(want - Number(it.quantity)) > 1)
@@ -557,11 +568,16 @@ function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
           else if (options[0].unit !== it.unit) bad(label, "'" + text + "': " + word + " of " + entry.name + " must be entered in " + options[0].unit + ".");
           else if (!options.some((r) => Math.abs(Number(cont[1]) * r.n - Number(it.quantity)) <= 1))
             bad(label, "'" + text + "': quantity " + it.quantity + " " + it.unit + " does not match the rule (" + options.map((r) => Number(cont[1]) * r.n).join(" or ") + " expected).");
+          else { convWords.push(words(entry.name).slice(0, 2)); warn(label, "Unit mismatch: " + entry.name + " (message said " + cont[1] + " " + word + ", '" + text + "') converted to " + it.quantity + " " + it.unit + " via the " + word + " rule."); }
         } else if (kgToPc || pcToKg) {
           const factor = rules.perKg[key];
           if (!factor)
             bad(label, "'" + text + "': " + entry.name + " is " + it.unit + " in the DB but the message used the other unit, and there is no conversion rule for it.");
-          else check(kgToPc ? Number(kgNum) * factor : Number(pcNum) / factor, factor + " pc per kg");
+          else {
+            check(kgToPc ? Number(kgNum) * factor : Number(pcNum) / factor, factor + " pc per kg");
+            convWords.push(words(entry.name).slice(0, 2));
+            warn(label, "Unit mismatch: " + entry.name + " (backend " + it.unit + ", message said " + (kgToPc ? "kg" : "pc") + ", '" + text + "') converted to " + it.quantity + " via " + factor + " pc/kg (user override).");
+          }
         }
       }
     });
@@ -619,12 +635,12 @@ function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
       warn(label, "New estimated conversion: " + n.item + " at " + n.conversion_factor + "."));
     // Model warnings: drop the ones that only repeat what the page already shows
     // (a unit conversion listed above, or a "totals match / as expected" remark).
-    const convItems = (o.unit_mismatches || []).concat(o.new_outliers_detected || []).map((m) => words(m.item).slice(0, 2));
+    const convItems = convWords;
     (o.warnings || []).forEach((w) => {
       const lw = String(w).toLowerCase();
       const repeatsConversion = /conver|override|unit mismatch/.test(lw) && convItems.some((ws) => ws.length && ws.every((x) => lw.includes(x)));
       const totalsFine = /computed_total|sum of line totals|number of rows/.test(lw) && /match|equal|expected|within|as stated/.test(lw);
-      const notApplicable = /not triggered|not applicable|not applied|not used|no .{0,40}(given|present|found|mentioned)|n\/a/.test(lw);
+      const notApplicable = /direct piece count|given directly|stated directly|as stated|as given|not triggered|not applicable|not applied|not used|no .{0,40}(given|present|found|mentioned)|n\/a/.test(lw);
       const repeatsMerge = /twice|duplicate|merg|combin|more than once|added together|summed|sum of|several quantities|total/.test(lw) && mergedWords.some((ws) => ws.length && ws.every((x) => lw.includes(x)));
       if (!repeatsConversion && !totalsFine && !notApplicable && !repeatsMerge) warn(label, w);
     });
@@ -666,15 +682,15 @@ function render(orders, issues, saved) {
   showNext(saved);
 
   $("summary").innerHTML = orders.map((o) => {
-    const rows = (o.items || []).map((it) =>
-      "<tr><td>" + esc(it.name) + '</td><td>' + esc(it.sku) + '</td><td class="num">' + esc(it.quantity) + " " + esc(it.unit) +
+    const rows = (o.items || []).map((it, n) =>
+      '<tr><td class="num">' + (n + 1) + "</td><td>" + esc(it.name) + '</td><td>' + esc(it.sku) + '</td><td class="num">' + esc(it.quantity) + " " + esc(it.unit) +
       '</td><td class="num">' + money(it.buying_price_per_unit) + '</td><td class="num">' + money(it.line_total) + "</td></tr>").join("");
     const charges = (o.additional_charges || []).map((c) =>
-      '<tr><td colspan="4" class="muted">' + esc(c.description) + '</td><td class="num">' + money(c.amount) + "</td></tr>").join("");
+      '<tr><td colspan="5" class="muted">' + esc(c.description) + '</td><td class="num">' + money(c.amount) + "</td></tr>").join("");
     return "<p><b>" + esc(o.vendor || "no vendor") + "</b> · " + esc(o.delivery_date || "no date") + "</p>" +
-      '<table><tr><th>Item</th><th>SKU</th><th class="num">Qty</th><th class="num">Price/unit</th><th class="num">Line total</th></tr>' +
+      '<table><tr><th class="num">#</th><th>Item</th><th>SKU</th><th class="num">Qty</th><th class="num">Price/unit</th><th class="num">Line total</th></tr>' +
       rows + charges +
-      '<tr><td colspan="4"><b>Total (items + charges)</b></td><td class="num"><b>' + money(o.computed_total) + "</b></td></tr></table>";
+      '<tr><td colspan="5"><b>Total (items + charges)</b></td><td class="num"><b>' + money(o.computed_total) + "</b></td></tr></table>";
   }).join("");
   $("raw").textContent = JSON.stringify(orders, null, 2);
 }
@@ -915,7 +931,6 @@ $("convertBtn").addEventListener("click", async () => {
     const env = parseEnv(await readText(ENV_FILE));
     const apiKey = env.OPENAI_API_KEY;
     if (!apiKey) throw new Error("OPENAI_API_KEY not found in .env");
-    const model = env.OPENAI_MODEL || "gpt-4.1";
     const systemPrompt = (await Promise.all(tab.rules.map((f) => readText(["prompts", "rules", f])))).join("\n\n");
     const itemTexts = await Promise.all(lists.map(readText));
     // one header, then every selected list's rows
@@ -944,7 +959,9 @@ $("convertBtn").addEventListener("click", async () => {
       }
     }
 
-    log("sending to " + model + ": prompt " + systemPrompt.length + " characters, " + (itemsText.split(/\r?\n/).length - 1) + " items, " + attached.length + " attachment(s)" + (message ? ", message typed" : ""));
+    // gpt-4.1 for everything by default. In .env, OPENAI_MODEL_TEXT (typed message, Excel, PDF, Word) and OPENAI_MODEL_IMAGE (a picture is attached) can each pick another model.
+    const model = (imageParts.length ? env.OPENAI_MODEL_IMAGE : env.OPENAI_MODEL_TEXT) || env.OPENAI_MODEL || "gpt-4.1";
+    log("sending to " + model + (imageParts.length ? " (picture attached)" : " (text only)") + ": prompt " + systemPrompt.length + " characters, " + (itemsText.split(/\r?\n/).length - 1) + " items, " + attached.length + " attachment(s)" + (message ? ", message typed" : ""));
     status("Asking " + model + "…");
     const userContent =
       "Today's date: " + todayISO() + " (use it to infer a missing year)\n\n" +
