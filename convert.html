@@ -424,7 +424,24 @@ async function callOpenAI(apiKey, model, messages) {
   const body = await res.text();
   if (!res.ok) {
     log("OpenAI answered with an error, HTTP " + res.status);
-    throw new Error("OpenAI API error " + res.status + ": " + body);
+    let code = "", detail = "";
+    try { const e = JSON.parse(body).error || {}; code = e.code || e.type || ""; detail = e.message || ""; } catch (_) { detail = body.slice(0, 200); }
+    const billing = "Add credits at platform.openai.com/settings/organization/billing, then convert again.";
+    let friendly;
+    if (res.status === 429 && /quota|credit|billing/i.test(code + " " + detail))
+      friendly = "OpenAI credits are used up. Nothing was converted. " + billing;
+    else if (res.status === 429)
+      friendly = "OpenAI says too many requests right now (rate limit). Wait a minute and convert again.";
+    else if (res.status === 401)
+      friendly = "OpenAI did not accept the API key. Check OPENAI_API_KEY in .env (no spaces or quotes), then convert again.";
+    else if (res.status === 402 || /billing|credit|quota/i.test(code))
+      friendly = "OpenAI billing problem. " + billing;
+    else if (res.status >= 500)
+      friendly = "OpenAI is having trouble (HTTP " + res.status + "). Wait a minute and convert again.";
+    else if (/context_length|too long|maximum context/i.test(code + " " + detail))
+      friendly = "The message and attachments are too long for the model. Convert fewer files or a shorter message at a time.";
+    else friendly = "OpenAI error " + res.status + ": " + (detail || body.slice(0, 200));
+    throw new Error(friendly);
   }
   const j = JSON.parse(body);
   log("OpenAI replied: " + j.usage.prompt_tokens + " tokens in, " + j.usage.completion_tokens + " out, finish_reason " + j.choices[0].finish_reason);
@@ -469,8 +486,9 @@ function parseOverrides(promptText) {
 
 function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
   const issues = [];
+  const words = (t) => String(t || "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").split(" ").filter((x) => x.length > 2);
   const bad = (label, text) => issues.push({ level: "bad", label, text });
-  const warn = (label, text) => issues.push({ level: "warn", label, text });
+  const warn = (label, text) => { if (!issues.some((i) => i.level === "warn" && i.label === label && i.text === text)) issues.push({ level: "warn", label, text }); };
 
   if (orders.length > 1) {
     bad("all", "Message produced " + orders.length + " orders but Selenium only enters the first one.");
@@ -505,6 +523,9 @@ function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
               bad(label, entry.name + ": Qty " + Q + " x Rate " + R + " = " + Math.round(Q * R * 100) / 100 + " but Gross is " + G + ". The quantity or the rate was misread; check this row.");
           }
         }
+        // Rate per unit = line total / quantity, worked out here (the model's division is not trusted).
+        if (Number(it.quantity) > 0 && it.line_total != null)
+          it.buying_price_per_unit = Math.round((Number(it.line_total) / Number(it.quantity)) * 100) / 100;
         const expected = entry.unit || defaultUnit;
         if (expected && it.unit !== expected)
           bad(label, "Unit for " + entry.name + " (SKU " + sku + ") must be " + expected + " but the model gave " + it.unit + ".");
@@ -516,8 +537,14 @@ function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
         // Lists without a unit column (Victory) are all pc and never converted, so "1Kg" in an item name or "Kgs" in the per column is not a unit mismatch.
         const converts = Boolean(entry.unit);
         const cont = converts ? text.match(/([\d.]+)\s*(box|boxes|bag|bags|gala)\b/i) : null;
-        const kgNum = (text.match(/([\d.]+)\s*(?:kgs?|kilos?)\b/i) || [])[1];
-        const pcNum = (text.match(/([\d.]+)\s*(?:pcs?|pieces?|pacs?|packs?)\b/i) || [])[1];
+        // A row merged from several ("Lemon 1kg + Lemon 2kg") counts all its quantities together.
+        const sumOf = (re) => { const all = [...text.matchAll(re)]; return all.length ? all.reduce((t, m) => t + Number(m[1]), 0) : undefined; };
+        const kgNum = sumOf(/([\d.]+)\s*(?:kgs?|kilos?)\b/gi);
+        const pcNum = sumOf(/([\d.]+)\s*(?:pcs?|pieces?|pacs?|packs?)\b/gi);
+        // Grams written for a Count (pc) item with no rule can't be turned into pieces.
+        const gNum = sumOf(/([\d.]+)\s*(?:grams?|gms?|g)\b/gi);
+        if (converts && it.unit === "pc" && gNum && !kgNum && !pcNum && !cont)
+          bad(label, "'" + text + "': " + entry.name + " is counted in pieces but the message gave grams, and there is no conversion rule for it.");
         const kgToPc = converts && it.unit === "pc" && kgNum && !pcNum, pcToKg = converts && it.unit === "kg" && pcNum && !kgNum;
         const check = (want, how) => {
           if (Math.abs(want - Number(it.quantity)) > 1)
@@ -539,12 +566,50 @@ function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
       }
     });
 
+    // The same item on more than one row (same SKU): enter it once, quantities and amounts added.
+    const seen = {}, merged = [], mergedWords = [];
+    (o.items || []).forEach((it) => {
+      const first = seen[String(it.sku)];
+      if (!first) { seen[String(it.sku)] = it; merged.push(it); return; }
+      const unit = first.unit || "";
+      const qty = Math.round((Number(first.quantity) + Number(it.quantity)) * 1000) / 1000;
+      const amt = Math.round(((first.line_total || 0) + (it.line_total || 0)) * 100) / 100;
+      const had = first._parts || [{ q: first.quantity, a: first.line_total || 0 }];
+      had.push({ q: it.quantity, a: it.line_total || 0 });
+      first._parts = had;
+      first.message_text = String(first.message_text || "") + " + " + String(it.message_text || "");
+      first.quantity = qty; first.line_total = amt;
+      first.buying_price_per_unit = qty > 0 ? Math.round((amt / qty) * 100) / 100 : first.buying_price_per_unit;
+    });
+    merged.forEach((it) => {
+      if (!it._parts) return;
+      mergedWords.push(words(it.name).slice(0, 2));
+      const u = it.unit || "";
+      warn(label, "Duplicate item merged: " + it.name + " was on " + it._parts.length + " rows (" +
+        it._parts.map((x) => x.q + " " + u + " for " + x.a).join(" + ") + "). Entered once as " + it.quantity + " " + u + " for " + it.line_total + " (" + it.buying_price_per_unit + " per " + u + ").");
+      delete it._parts;
+    });
+    // A row that holds several quantities of one unit ("Long Brinjal 4kg,5kg 140rs"): the sum is entered, say so.
+    if (defaultUnit !== "pc")
+      merged.forEach((it) => {
+        if (mergedWords.some((ws) => ws.join(" ") === words(it.name).slice(0, 2).join(" "))) return;
+        const t = String(it.message_text || "");
+        const nums = (re) => [...t.matchAll(re)].map((m) => m[1]);
+        const parts = nums(/([\d.]+)\s*(?:kgs?|kilos?)\b/gi).length > 1 ? nums(/([\d.]+)\s*(?:kgs?|kilos?)\b/gi).map((n) => n + " kg")
+          : nums(/([\d.]+)\s*(?:pcs?|pieces?)\b/gi).length > 1 ? nums(/([\d.]+)\s*(?:pcs?|pieces?)\b/gi).map((n) => n + " pc") : null;
+        if (!parts) return;
+        mergedWords.push(words(it.name).slice(0, 2));
+        warn(label, "Several quantities on one row: " + it.name + " was given as '" + t + "' (" + parts.join(" + ") + "). Entered once as " + it.quantity + " " + (it.unit || "") + " for " + it.line_total + " (" + it.buying_price_per_unit + " per " + (it.unit || "") + ").");
+      });
+    o.items = merged;
+
     const actual = Math.round(
       ((o.items || []).reduce((s, i) => s + (i.line_total || 0), 0) +
         (o.additional_charges || []).reduce((s, c) => s + (c.amount || 0), 0)) * 100) / 100;
-    if (Math.abs(actual - (o.computed_total || 0)) > 0.01)
-      warn(label, "Model's computed_total was " + o.computed_total + " but the real sum is " + actual + " (corrected in the saved JSON).");
-    o.computed_total = actual;
+    o.computed_total = actual; // always the page's own sum, never the model's
+    // A total written in a plain message (no tax) should equal the items; invoice tabs have their own checks.
+    if (defaultUnit !== "pc" && o.stated_total != null && Math.abs(actual - Number(o.stated_total)) > 2)
+      warn(label, "The message total is " + o.stated_total + " but the items add up to " + actual + ". Check the amounts (the total may also include tax or charges).");
 
     (o.unmatched_items || []).forEach((u) =>
       bad(label, "Unmatched: " + u.message_text + ". " + (u.reason || "")));
@@ -552,7 +617,17 @@ function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
       warn(label, "Unit mismatch: " + m.item + " (backend " + m.backend_unit + ", message said " + m.message_unit + ", '" + m.message_text + "') converted to " + m.converted_quantity + " via " + m.conversion_factor + "."));
     (o.new_outliers_detected || []).forEach((n) =>
       warn(label, "New estimated conversion: " + n.item + " at " + n.conversion_factor + "."));
-    (o.warnings || []).forEach((w) => warn(label, w));
+    // Model warnings: drop the ones that only repeat what the page already shows
+    // (a unit conversion listed above, or a "totals match / as expected" remark).
+    const convItems = (o.unit_mismatches || []).concat(o.new_outliers_detected || []).map((m) => words(m.item).slice(0, 2));
+    (o.warnings || []).forEach((w) => {
+      const lw = String(w).toLowerCase();
+      const repeatsConversion = /conver|override|unit mismatch/.test(lw) && convItems.some((ws) => ws.length && ws.every((x) => lw.includes(x)));
+      const totalsFine = /computed_total|sum of line totals|number of rows/.test(lw) && /match|equal|expected|within|as stated/.test(lw);
+      const notApplicable = /not triggered|not applicable|not applied|not used|no .{0,40}(given|present|found|mentioned)|n\/a/.test(lw);
+      const repeatsMerge = /twice|duplicate|merg|combin|more than once|added together|summed|sum of|several quantities|total/.test(lw) && mergedWords.some((ws) => ws.length && ws.every((x) => lw.includes(x)));
+      if (!repeatsConversion && !totalsFine && !notApplicable && !repeatsMerge) warn(label, w);
+    });
   });
   return issues;
 }

@@ -10,6 +10,8 @@ Exactly 3 valid vendor values: "Kanchana Vegetables", "Kanchana Fruits", "Manoj"
 UNIT HANDLING
 The unit of every item is fixed by the backend (DB). Take it from the item list's third column "Count or Weight" — never from the item's name, and never from what sounds natural in everyday English: Count -> backend unit "pc"; Weight -> backend unit "kg". This column is the ONLY source of truth. Ignore any "1 Pc", "1 Kg", "250g" etc. written inside the item name.
 
+Grams are not a different unit: for a Weight (kg) item, "450 gram" / "450 gm" / "450g" is simply 0.45 kg (grams / 1000). Convert it directly with no override and no warning, and never put such a line in unmatched_items. This is only for Weight items: for a Count (pc) item, grams cannot become pieces unless the item has a rule in MANUAL CONVERSION OVERRIDES, so put that line in unmatched_items instead of guessing a number of pieces.
+
 A fractional/decimal quantity (e.g. "25.5 kg") is completely normal for Weight items and is never a reason to invent a piece conversion.
 
 When the unit written in the message differs from the item's backend unit (for example "4kg" for a Count item, or "10 pc" for a Weight item), resolve it like this:

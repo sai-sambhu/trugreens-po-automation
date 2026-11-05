@@ -90,7 +90,7 @@ Yellow Pumkin / Gummadikaya	45	Weight
 Potato	3	Weight
 Coconut / Kobbarikaya 1 Pc	49	Count
 Flowers	5000	Weight
-Iceberg Lettuce	186	Weight
+Iceberg Lettuce	186	Count
 
 Tella Galijeru	1245543	Count
 Aava Kura / Mustard Leaf - Small	1245391	Count
