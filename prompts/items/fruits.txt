@@ -11,7 +11,7 @@ Baby Apple	1492	Weight
 Pedha Regu/Apple berry	1475	Weight
 Imported Kiwi - Box of 3	1473	Count
 Custard Apple / Seethaphal	133	Weight
-White Dragon Fruit 1 Pc	132	Count
+White Dragon Fruit	132	Weight
 Sun Melon	131	Weight
 Kothapalli Mango	162	Weight
 Premium Royal Gala	158	Weight
@@ -34,7 +34,7 @@ Sunderi Mango	173	Weight
 Neelam Mango	171	Weight
 Daseri Mango	172	Weight
 Red Banana	111	Weight
-Red Dragon Fruit 1 Pc	110	Count
+Red Dragon Fruit	110	Weight
 Blueberry 1 Box	109	Count
 Cherry	1416	Weight
 Fuzi Apple	157	Weight
