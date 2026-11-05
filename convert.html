@@ -119,6 +119,15 @@
 
   .modelrow { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
   .modelrow .lbl { margin: 0; }
+  .dropdown { position: relative; }
+  .dropdown::after { content: ""; position: absolute; right: 13px; top: 50%; width: 7px; height: 7px; margin-top: -6px;
+    border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); pointer-events: none; }
+  .dropdown select { appearance: none; -webkit-appearance: none; min-width: 190px; padding: 9px 36px 9px 14px; border-radius: 10px;
+    border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font: inherit; font-weight: 600; cursor: pointer;
+    transition: border-color .15s, box-shadow .15s; }
+  .dropdown select:hover { border-color: var(--muted); }
+  .dropdown select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .dropdown select option { background: var(--surface); color: var(--text); }
   .modelhint { color: var(--muted); font-size: 13px; flex: 1 1 260px; }
   .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 16px; }
   #status { color: var(--muted); font-size: 14px; }
@@ -215,10 +224,12 @@
 
     <div class="modelrow">
       <span class="lbl">Model</span>
-      <div class="seg" id="modelSeg">
-        <label><input type="radio" name="model" value="strong" checked><span>GPT-4.1</span></label>
-        <label><input type="radio" name="model" value="mini"><span>GPT-4.1 mini</span></label>
-        <label><input type="radio" name="model" value="auto"><span>Auto</span></label>
+      <div class="dropdown">
+        <select id="modelSel" aria-label="Model">
+          <option value="strong">GPT-4.1 (default)</option>
+          <option value="mini">GPT-4.1 mini</option>
+          <option value="auto">Auto</option>
+        </select>
       </div>
       <span class="modelhint" id="modelHint"></span>
     </div>
@@ -350,15 +361,15 @@ function updateButton() {
   $("convertBtn").disabled = !dir || !hasInput;
 }
 
-const selectedModel = () => document.querySelector('input[name="model"]:checked').value;
+const selectedModel = () => $("modelSel").value;
 const MODEL_HINTS = {
   strong: "Most accurate. Used for everything.",
   mini: "About 5 times cheaper. A picture still uses GPT-4.1.",
   auto: "Small model only for short Fruits/Veggies text. Pictures, long inputs, Victory and Aashirwaad use GPT-4.1.",
 };
 function showModelHint() { $("modelHint").textContent = MODEL_HINTS[selectedModel()]; }
-try { const m = localStorage.getItem("modelChoice"); const r = m && document.querySelector('input[name="model"][value="' + m + '"]'); if (r) r.checked = true; } catch (_) {}
-document.querySelectorAll('input[name="model"]').forEach((r) => r.addEventListener("change", () => { try { localStorage.setItem("modelChoice", selectedModel()); } catch (_) {} showModelHint(); }));
+try { const m = localStorage.getItem("modelChoice"); if (m && ["strong", "mini", "auto"].includes(m)) $("modelSel").value = m; } catch (_) {}
+$("modelSel").addEventListener("change", () => { try { localStorage.setItem("modelChoice", selectedModel()); } catch (_) {} showModelHint(); });
 showModelHint();
 
 let pendingHandle = null;
