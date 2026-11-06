@@ -1,2 +1,3 @@
-// Bump this on every release. The page compares it with the copy on GitHub to tell you when an update is needed.
-window.APP_VERSION = "2026-11-06.3";
+// Release number (semantic: MAJOR.MINOR.PATCH). Bump it on every release: PATCH for fixes and prompt tweaks,
+// MINOR for new features, MAJOR for big changes. The page compares it with the copy on GitHub.
+window.APP_RELEASE = "1.0.0";

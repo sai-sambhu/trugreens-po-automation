@@ -113,7 +113,7 @@ convert.html                       the page (HTML only; open this)
 assets/
   css/style.css                    the page styles
   js/app.js                        the page logic (AI call, checks, saving)
-  js/version.js                    the version number; bump it on every release (the page compares it with GitHub and shows "update needed")
+  js/version.js                    the release number (v1.0.0 style); bump it on every release (the page compares it with GitHub and shows "update needed")
 src/create_purchase_order.py       Selenium automation
 prompts/
   rules/                           prompt rules sent to the AI (a tab sends core.txt + its own files)

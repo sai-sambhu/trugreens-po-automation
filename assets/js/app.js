@@ -800,8 +800,8 @@ function isNewer(remote, local) {
   return false;
 }
 async function checkVersion() {
-  const local = window.APP_VERSION;
-  $("versionNote").textContent = local ? "Version " + local : "";
+  const local = window.APP_RELEASE;
+  $("versionNote").textContent = local ? "v" + local : "";
   if (!local) return;
   try {
     const ctl = new AbortController();
@@ -809,15 +809,15 @@ async function checkVersion() {
     const res = await fetch(VERSION_URL + "?t=" + Date.now(), { cache: "no-store", signal: ctl.signal });
     clearTimeout(timer);
     if (!res.ok) return;
-    const remote = (((await res.text()).match(/APP_VERSION\s*=\s*"([^"]+)"/)) || [])[1];
+    const remote = (((await res.text()).match(/APP_RELEASE\s*=\s*"([^"]+)"/)) || [])[1];
     if (!remote) return;
     if (isNewer(remote, local)) {
-      $("updateBar").innerHTML = "A newer version (" + esc(remote) + ") is available. Run <code>update_code</code> (or <code>git pull</code>), then refresh this page.";
+      $("updateBar").innerHTML = "A newer version (v" + esc(remote) + ") is available. Run <code>update_code</code> (or <code>git pull</code>), then refresh this page.";
       $("updateBar").classList.remove("hidden");
-      $("versionNote").textContent = "Version " + local + " · outdated, newest is " + remote;
+      $("versionNote").textContent = "v" + local + " · outdated, newest is v" + remote;
       $("versionNote").classList.add("old");
     } else {
-      $("versionNote").textContent = "Version " + local + " · up to date";
+      $("versionNote").textContent = "v" + local + " · up to date";
     }
   } catch (_) { /* offline or GitHub not reachable: say nothing */ }
 }
