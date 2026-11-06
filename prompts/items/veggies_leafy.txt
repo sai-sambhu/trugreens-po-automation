@@ -74,6 +74,7 @@ Ginger	22	Weight
 Haricot Beans / French Beans 	35	Weight
 Long Brinjal Pennadi / Podugu Vankaya	11	Weight
 Raw Mango / Pacchi Mamidi	54	Weight
+Raw Papaya	1245908	Weight
 Carrot	19	Weight
 Raddish / Mullangi 1 Pc	60	Count
 Cauliflower 1 Pc	26	Count

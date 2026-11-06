@@ -16,7 +16,7 @@ A decimal quantity (25.5 kg) is normal for Weight items and never a reason to in
 When the message unit differs from the item's unit (for example "4kg" for a Count item, or "10 pc" for a Weight item):
 a. If THIS EXACT item is in MANUAL CONVERSION OVERRIDES below (never reuse one item's factor for another, even a similar one), convert with that factor and give the quantity in the item's unit. No warning needed: the page records the conversion. This covers kg <-> pieces ("1 kg = 25 pc") and container units such as box, bag or gala ("1 box = 23 kg": 2 boxes of Tomatoes = 46 kg).
 b. If there is NO rule, do NOT estimate or invent a factor and NEVER just relabel the number ("5kg" of a Count item is NOT "5 pc", "6pc" of a Weight item is NOT "6 kg"). Put the line in "unmatched_items" with its line_total and a reason such as "Unit mismatch: <item> is Count (pc) in the DB but the message gave kg, and there is no conversion rule."
-If the message already uses the item's unit, take it as-is and apply no override (Lemon has an override, but "Lemon 100 pc" needs none).
+CHECK THE MESSAGE UNIT FIRST. If it already equals the item's unit (a Count item written in pc/pcs/pieces, a Weight item written in kg), copy the number exactly as written and apply NO override: "Spring onion 10 pc-50rs" -> 10 pc, "Lemon 100 pc" -> 100 pc. An override is used only when the message unit is the OTHER unit (kg for a Count item, pc for a Weight item) or a container word (box, bag, gala). Never multiply a number that is already in the item's own unit.
 
 MANUAL CONVERSION OVERRIDES (the list-specific section below holds them). Line format: "- <exact item name> : <A> kg = <B> pc" or "- <exact item name> : <A> box|bag|gala = <B> pc|kg" ("7.8 kg = 10 pc" means 1 pc = 0.78 kg).
 

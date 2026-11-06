@@ -313,6 +313,15 @@ function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
           if (it.unit === "pc" && pcAll.length > 1 && !kgAll.length && Math.abs(sumPc - Number(it.quantity)) > 0.01)
             bad(label, "'" + text + "': the quantities in the text add up to " + sumPc + " pc but " + it.quantity + " pc was entered for " + entry.name + ".");
         }
+        // A quantity already written in the item's own unit must be entered as written (no override applied on top of it).
+        if (defaultUnit !== "pc" && converts && !cont) {
+          const kgAll2 = [...text.matchAll(/([\d.]+)\s*(?:kgs?|kilos?)\b/gi)], pcAll2 = [...text.matchAll(/([\d.]+)\s*(?:pcs?|pieces?)\b/gi)];
+          const sKg = kgAll2.reduce((t, m) => t + Number(m[1]), 0), sPc = pcAll2.reduce((t, m) => t + Number(m[1]), 0);
+          if (it.unit === "pc" && pcAll2.length && !kgAll2.length && Number(it.quantity) > sPc + 0.5)
+            bad(label, "'" + text + "': the message already gives " + sPc + " pc but " + it.quantity + " pc was entered for " + entry.name + " (a conversion was applied by mistake).");
+          if (it.unit === "kg" && kgAll2.length && !pcAll2.length && Math.abs(Number(it.quantity) - sKg) > 0.01)
+            bad(label, "'" + text + "': the message already gives " + sKg + " kg but " + it.quantity + " kg was entered for " + entry.name + ".");
+        }
         const kgToPc = converts && it.unit === "pc" && kgNum && !pcNum, pcToKg = converts && it.unit === "kg" && pcNum && !kgNum;
         const check = (want, how) => {
           if (Math.abs(want - Number(it.quantity)) > 1)

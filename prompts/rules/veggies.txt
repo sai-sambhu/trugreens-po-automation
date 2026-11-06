@@ -11,7 +11,6 @@ METHI RULE (check in this order): line contains "big" (any form) -> "Methi / Men
 CONVERSION RULES FOR THIS LIST (all other items need no conversion):
 - Lemon 1 Pc : 1 kg = 25 pc (user's actual vendor lemons; smaller than typical medium)
 - Drumstick 1 Pc : 1 kg = 15 pc
-- Spring Onion / Ulli Kadalu : 1 kg = 7 pc
 - Cauliflower 1 Pc : 1 bag = 10 pc
 - Cauliflower 1 Pc : 7.8 kg = 10 pc (a bag of 10 pc weighs 7.8 kg)
 - Raw Banana / Pachi Arati 1 Pc - Big : 1 gala = 45 pc
@@ -36,7 +35,7 @@ WORKED CONVERSION EXAMPLES (follow these exactly):
 - "Lemon-1.5kg-200rs" (Lemon is pc, 25 pc per kg): 1.5 x 25 = 37.5, rounded to a whole piece = 38 pc. One item: quantity 38, line_total 200.
 - "Cauliflower-3kg-240rs" (Cauliflower is pc, 7.8 kg = 10 pc): 3 kg is about 4 pc (3 x 10 / 7.8 rounded to a whole piece). One item: quantity 4, line_total 240. (Do NOT use the bag figure for kg.)
 - "Cauliflower-2 bags-400rs": 2 bags x 10 = 20 pc. One item: quantity 20, line_total 400.
-- "Spring Onion-2.5kg-125rs": 2.5 x 7 = 17.5, rounded up = 18 pc. One item: quantity 18, line_total 125.
+- "Spring onion 10 pc-50rs" already gives pieces -> quantity 10, line_total 50 (no conversion). Spring Onion has NO kg rule: "Spring Onion-2.5kg-125rs" goes to "unmatched_items" with the reason "Unit mismatch: Spring Onion is Count (pc) in the DB but the message gave kg, and there is no conversion rule."
 - "Sambar onion 3 kg 420rs" (Sambar Onion 1Pc / 500gms is pc, each piece 500 gms): 3 kg / 0.5 kg = 6 pc. One item: quantity 6, line_total 420. "Baby aloo 3kg-150rs" (Baby Potato 500gms is pc, each piece 500 gms) -> 6 pc, line_total 150. If the message already gives pieces ("Baby aloo 2pc-40rs", "Sambar onion 6pc-420rs"), keep the pieces as written; any "per piece 500 gms" note in the message is only information.
 - "Tomato-2 box-1500rs": 2 x 23 = 46 kg. One item: quantity 46, line_total 1500.
 - "Raw Banana Small-2 gala-1400rs": 2 x 55 = 110 pc. One item "Raw Banana / Pachi Arati 1 Pc - Small": quantity 110, line_total 1400.
