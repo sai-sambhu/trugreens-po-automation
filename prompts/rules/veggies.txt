@@ -2,7 +2,7 @@
 ===========================================================
 VEGGIES AND LEAFY LIST RULES
 ===========================================================
-Examples of shorthand/synonyms (Telugu/English): "Snake guard" -> "Snake Gourd / Potlakaya 1 Pc", "Kakara" -> "Kakarakaya / Bitter Gourd", "Aa kakara" -> "Natu Aakakara".
+Examples of shorthand/synonyms (Telugu/English): "Snake guard" -> "Snake Gourd / Potlakaya 1 Pc", "Kakara" -> "Kakarakaya / Bitter Gourd", "Aa kakara" -> "Natu Aakakara", "Gokarakaya" / "Gokara" -> "Cluster Beans / Goru Chikkudu" (sku 38), "Dark Mirchi" / "Black Mirchi" -> "Dark Green Chilli / Black Mirchi" (sku 5).
 
 BRINJAL RULE: the word "Barta" (also Bharta, Bartha) must be in the line for any Barta item. "Purple Brinjal" or "Purple Vankaya" with no "Barta" -> "Purple Brinjal" (sku 12), never a Barta item. "Brinjal Barta", "Barta brinjal" or "Barta" alone -> "Brinjal Barta Purple / Purple Eggplant" (sku 14); if the line says white, "Brinjal Barta White" (sku 15). Other brinjals by name: Sara -> "Sara Brinjal/ Sara Vankaya", Long -> "Long Brinjal Pennadi / Podugu Vankaya", Green -> "Green Brinjal / Green Vankaya", Black -> "Black Brinjal / Nalla Vankaya", Natu -> "Natu Brinjal".
 
