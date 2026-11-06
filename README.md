@@ -106,7 +106,10 @@ Run `commands/mac/update_code.command` or `commands/windows/update_code.bat`, or
 ## Layout
 
 ```
-convert.html                       the UI
+convert.html                       the page (HTML only; open this)
+assets/
+  css/style.css                    the page styles
+  js/app.js                        the page logic (AI call, checks, saving)
 src/create_purchase_order.py       Selenium automation
 prompts/
   rules/                           prompt rules sent to the AI (a tab sends core.txt + its own files)
@@ -131,4 +134,4 @@ Generated per run and git-ignored: `purchase_orders.json`.
 
 1. Add the item list to `prompts/items/` (`Variation Name<tab>Sku`, plus `Count or Weight` if units vary).
 2. Add a rules file to `prompts/rules/` with that vendor's rules (vendor name, units, matching).
-3. Add one line to `TABS` near the top of the script in `convert.html`: label, list file, rules files (`core.txt` plus yours), and `vendor` / `pcOnly` if the tab belongs to one vendor and is all pieces. The tab button appears by itself.
+3. Add one line to `TABS` near the top of `assets/js/app.js`: label, list file, rules files (`core.txt` plus yours), and `vendor` / `pcOnly` if the tab belongs to one vendor and is all pieces. The tab button appears by itself.
