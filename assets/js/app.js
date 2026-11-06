@@ -788,3 +788,37 @@ $("convertBtn").addEventListener("click", async () => {
     updateButton();
   }
 });
+
+/* ---------- is this copy of the code out of date? ---------- */
+const VERSION_URL = "https://raw.githubusercontent.com/sai-sambhu/trugreens-po-automation/main/assets/js/version.js";
+const versionParts = (v) => String(v).split(/[.\-]/).map((n) => parseInt(n, 10) || 0);
+function isNewer(remote, local) {
+  const a = versionParts(remote), b = versionParts(local);
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0);
+  }
+  return false;
+}
+async function checkVersion() {
+  const local = window.APP_VERSION;
+  $("versionNote").textContent = local ? "Version " + local : "";
+  if (!local) return;
+  try {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 6000);
+    const res = await fetch(VERSION_URL + "?t=" + Date.now(), { cache: "no-store", signal: ctl.signal });
+    clearTimeout(timer);
+    if (!res.ok) return;
+    const remote = (((await res.text()).match(/APP_VERSION\s*=\s*"([^"]+)"/)) || [])[1];
+    if (!remote) return;
+    if (isNewer(remote, local)) {
+      $("updateBar").innerHTML = "A newer version (" + esc(remote) + ") is available. Run <code>update_code</code> (or <code>git pull</code>), then refresh this page.";
+      $("updateBar").classList.remove("hidden");
+      $("versionNote").textContent = "Version " + local + " · outdated, newest is " + remote;
+      $("versionNote").classList.add("old");
+    } else {
+      $("versionNote").textContent = "Version " + local + " · up to date";
+    }
+  } catch (_) { /* offline or GitHub not reachable: say nothing */ }
+}
+checkVersion();

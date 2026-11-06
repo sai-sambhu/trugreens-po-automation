@@ -101,6 +101,9 @@ Editing the prompt or item lists takes effect on the next convert, with no code 
 
 ## Updating
 
+The page checks GitHub when it opens. If this copy is older, an amber bar at the top says so; the version is also shown at the bottom of the page. The bar needs internet and does not update anything by itself.
+
+
 Run `commands/mac/update_code.command` or `commands/windows/update_code.bat`, or `git pull` in the project folder. Your `.env` is not touched. If the pull fails because you edited tracked files locally, run `git stash` and try again.
 
 ## Layout
@@ -110,6 +113,7 @@ convert.html                       the page (HTML only; open this)
 assets/
   css/style.css                    the page styles
   js/app.js                        the page logic (AI call, checks, saving)
+  js/version.js                    the version number; bump it on every release (the page compares it with GitHub and shows "update needed")
 src/create_purchase_order.py       Selenium automation
 prompts/
   rules/                           prompt rules sent to the AI (a tab sends core.txt + its own files)
