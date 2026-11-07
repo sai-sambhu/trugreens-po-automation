@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TruGreens PO Converter</title>
+<title>TruGreens Desk</title>
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -13,16 +13,28 @@
     <div class="brand">
       <div class="logo">TG</div>
       <div>
-        <h1>TruGreens PO Converter</h1>
-        <p class="sub">Paste a message and/or attach files. Only a clean result is saved for Selenium.</p>
+        <h1>TruGreens Desk</h1>
+        <p class="sub">Purchase orders and stock reports in one place.</p>
       </div>
+    </div>
+    <nav class="seg views" id="views" aria-label="Choose a tool">
+      <label><input type="radio" name="view" value="po" checked><span>Purchase Order Converter</span></label>
+      <label><input type="radio" name="view" value="report"><span>Stock Report</span></label>
+    </nav>
+  </header>
+
+  <div id="viewPO">
+  <div class="toolhead">
+    <div>
+      <h2 class="tooltitle">Purchase Order Converter</h2>
+      <p class="sub">Paste a vendor message and/or attach files. Only a clean result is saved for Selenium.</p>
     </div>
     <div class="folder">
       <span class="dot" id="folderDot"></span>
       <span id="folderPill" class="pill idle">not connected</span>
       <button id="folderBtn" class="small">Choose folder</button>
     </div>
-  </header>
+  </div>
   <span class="muted" id="folderHint">Pick the project folder (the one with .env and the prompts folder).</span>
 
   <section class="card">
@@ -93,6 +105,56 @@
       <code id="runCmd"></code>
     </div>
   </section>
+  </div>
+
+  <div id="viewReport" class="hidden">
+    <div class="toolhead">
+      <div>
+        <h2 class="tooltitle">Stock Report</h2>
+        <p class="sub">Attach the three exports from PosBytz. You get an Excel file with purchased, sold, stock and wastage per item.</p>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-head"><span class="step">1</span><h2>Exports</h2></div>
+      <label class="drop wide" id="reportDrop">
+        <input type="file" id="reportFilesInput" multiple accept=".csv,.xlsx,.xls">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+        <strong>Drop the export files here, or click to browse</strong>
+        <span>Select all three together, or add them one at a time. Excel or CSV.</span>
+      </label>
+      <div class="autorow">
+        <button id="autoBtn" type="button" class="primary">Auto-select latest from Downloads</button>
+        <button id="autoChange" type="button" class="small">Use another export folder</button>
+        <span id="autoHint" class="muted">Opens your Downloads folder. Press Ctrl+A (Cmd+A on Mac) to select everything, then Open: the newest purchase, sold and stock export are picked for you.</span>
+      </div>
+      <ul class="checklist" id="checklist">
+        <li data-kind="purchase"><span class="tick"></span><div><b>Purchase order items</b><small>Waiting for file</small></div></li>
+        <li data-kind="sales"><span class="tick"></span><div><b>Sold items</b><small>Waiting for file</small></div></li>
+        <li data-kind="stock"><span class="tick"></span><div><b>Current stock</b><small>Waiting for file</small></div></li>
+      </ul>
+      <div id="reportNotes" class="notes"></div>
+      <div id="reportAge" class="agewarn hidden"></div>
+      <div class="actions">
+        <button id="reportBtn" class="primary big" disabled>Submit &amp; build report</button>
+        <span id="reportStatus"></span>
+      </div>
+    </section>
+
+    <section id="reportResult" class="card hidden">
+      <div class="card-head"><span class="step">2</span><h2>Report</h2></div>
+      <div id="reportBanner" class="banner"></div>
+      <ul id="reportIssues" class="issues"></ul>
+      <div class="actions" style="margin:0 0 14px"><button id="reportDownload" class="primary">Download Excel</button></div>
+      <div class="seg rtabs" id="rtabs" role="tablist">
+        <label><input type="radio" name="rtab" value="items" checked><span>Item-wise Stock</span></label>
+        <label><input type="radio" name="rtab" value="cats"><span>Category-wise Summary</span></label>
+      </div>
+      <p class="rtabnote muted" id="rtabNote"></p>
+      <div id="reportTable" class="tablewrap"></div>
+      <div id="reportTable2" class="tablewrap hidden"></div>
+    </section>
+  </div>
   <p id="versionNote" class="vernote"></p>
 </main>
 
@@ -108,5 +170,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="assets/js/version.js"></script>
 <script src="assets/js/app.js"></script>
+<script src="assets/js/report.js"></script>
 </body>
 </html>

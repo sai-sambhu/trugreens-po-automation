@@ -176,3 +176,54 @@
   .update code { font: inherit; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: rgba(0,0,0,.08); padding: 1px 6px; border-radius: 5px; }
   .vernote { text-align: center; color: var(--muted); font-size: 12.5px; margin: 18px 0 4px; }
   .vernote.old { color: var(--warn); font-weight: 650; }
+
+  /* tools: view switch, tool headings, report slots */
+  .views span { white-space: nowrap; }
+  .toolhead { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tooltitle { font-size: 17px; margin: 0; font-weight: 700; letter-spacing: -.01em; }
+  .toolhead .sub { margin-top: 2px; }
+  .drop.wide { min-height: 150px; }
+  .checklist { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 720px) { .checklist { grid-template-columns: 1fr; } }
+  .checklist li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line);
+    border-radius: 12px; background: var(--surface-2); transition: border-color .2s, background .2s; min-width: 0; }
+  .checklist li > div { min-width: 0; }
+  .checklist b { display: block; font-size: 14px; }
+  .checklist small { display: block; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tick { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line-strong); flex: none; display: grid; place-items: center;
+    color: transparent; font-size: 15px; font-weight: 800; transition: all .2s; }
+  .tick::after { content: "\2713"; }
+  .checklist li.done { border-color: var(--ok); background: var(--ok-bg); }
+  .checklist li.done .tick { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .checklist li.done small { color: var(--ok); }
+  .notes:not(:empty) { margin-top: 12px; }
+  .notes p { margin: 4px 0; font-size: 13px; color: var(--warn); }
+  #reportStatus { color: var(--muted); font-size: 14px; }
+  #reportTable td:first-child, #reportTable th:first-child { white-space: nowrap; }
+  #reportTable tr:last-child td { border-top: none; border-bottom: 1px solid var(--line); font-size: inherit; }
+  #reportTable td.neg { color: var(--bad); }
+  .autorow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+  .autorow .muted { font-size: 13px; flex: 1 1 260px; }
+  .agewarn { margin-top: 12px; padding: 10px 12px; border-radius: 9px; border-left: 4px solid var(--warn); background: var(--warn-bg); color: var(--warn); font-size: 14px; }
+  .subhead { font-size: 14px; margin: 22px 0 8px; font-weight: 650; }
+  .subhead .muted { font-weight: 450; font-size: 13px; margin-left: 6px; }
+  #reportTable2 td:first-child { white-space: normal; }
+  #reportTable2 tr.total td { font-weight: 700; border-top: 2px solid var(--line-strong); background: var(--surface-2); }
+  .rtabs { margin-top: 4px; }
+  .rtabnote { font-size: 13px; margin: 10px 0 12px; }
+  #reportTable thead, #reportTable2 thead { position: sticky; top: 0; z-index: 1; }
+  th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+  th.sortable:hover { color: var(--text); }
+  th.sortable i { display: inline-block; width: 10px; margin-left: 4px; font-style: normal; opacity: .8; }
+  th.sortable[data-dir="asc"] i::after { content: "\25B2"; font-size: 9px; }
+  th.sortable[data-dir="desc"] i::after { content: "\25BC"; font-size: 9px; }
+  tr.filters th { padding: 5px 6px; background: var(--surface); text-transform: none; }
+  tr.filters input { width: 100%; min-width: 70px; padding: 5px 8px; border-radius: 7px; border: 1px solid var(--line-strong);
+    background: var(--surface-2); color: var(--text); font: inherit; font-size: 13px; font-weight: 400; }
+  tr.filters input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .rowcount { font-size: 12.5px; margin: 8px 2px 0; }
+  #reportTable .tablewrap, #reportTable, #reportTable2 { max-height: 70vh; overflow: auto; }
+  main { transition: max-width .2s; }
+  body.wide main { max-width: min(1600px, 98vw); }
+  body.wide #reportTable th, body.wide #reportTable td { padding-left: 14px; padding-right: 14px; }
+  #reportTable td:nth-child(2) { min-width: 240px; }
