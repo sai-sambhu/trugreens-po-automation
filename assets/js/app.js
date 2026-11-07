@@ -821,7 +821,9 @@ async function checkVersion() {
     const remote = (((await res.text()).match(/APP_RELEASE\s*=\s*"([^"]+)"/)) || [])[1];
     if (!remote) return;
     if (isNewer(remote, local)) {
-      $("updateBar").innerHTML = "A newer version (v" + esc(remote) + ") is available. Run <code>update_code</code> (or <code>git pull</code>), then refresh this page.";
+      $("updateBar").innerHTML = "<span>A newer version (v" + esc(remote) + ") is available. Run <code>update_code</code> (or <code>git pull</code>), then refresh this page.</span> <a id=\"barUpdate\" class=\"btn small hidden\" href=\"trugreens://update\">Update code</a>";
+      window.APP_OUTDATED = true;
+      document.dispatchEvent(new Event("tg-version"));
       $("updateBar").classList.remove("hidden");
       $("versionNote").textContent = "v" + local + " · outdated, newest is v" + remote;
       $("versionNote").classList.add("old");

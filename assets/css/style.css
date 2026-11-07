@@ -227,3 +227,42 @@
   body.wide main { max-width: min(1600px, 98vw); }
   body.wide #reportTable th, body.wide #reportTable td { padding-left: 14px; padding-right: 14px; }
   #reportTable td:nth-child(2) { min-width: 240px; }
+
+  /* links that start the commands (need setup_computer once) */
+  a.btn { display: inline-block; text-decoration: none; font-size: 14px; border: 1px solid var(--line-strong); background: var(--surface);
+    color: var(--text); border-radius: 9px; padding: 7px 14px; transition: background .15s, border-color .15s; }
+  a.btn:hover { background: var(--surface-2); border-color: var(--muted); }
+  a.btn.small { padding: 4px 12px; font-size: 13px; border-radius: 999px; }
+  a.btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 650; }
+  a.btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  a.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: -6px 0 18px; font-size: 13px; }
+  .toolshelp { flex: 1 1 280px; }
+
+  /* tucked-away settings menu */
+  header.top { position: relative; }
+  .gear { position: relative; margin: 0; }
+  .gear summary { list-style: none; cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+    color: var(--muted); border: 1px solid var(--line); background: var(--surface); }
+  .gear summary::-webkit-details-marker { display: none; }
+  .gear summary:hover, .gear[open] summary { color: var(--text); border-color: var(--muted); }
+  .gear summary svg { width: 18px; height: 18px; }
+  .gear summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .gearmenu { position: absolute; right: 0; top: 44px; z-index: 20; width: 270px; display: grid; gap: 8px; padding: 14px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow), 0 8px 28px rgba(0,0,0,.18); }
+  .gearmenu strong { font-size: 13px; }
+  .gearmenu a.btn { text-align: center; }
+  .gearmenu p { margin: 2px 0 0; font-size: 12.5px; }
+  .gearactions { display: grid; gap: 8px; }
+  .gearsetup { font-size: 13px; line-height: 1.5; }
+  .gearsetup p { margin: 0 0 6px; }
+  .gearsetup .path { display: block; word-break: break-all; margin-top: 4px; }
+  .gear.needs summary::after { content: ""; position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--warn); border: 2px solid var(--bg); }
+  .gear summary { position: relative; }
+  a.btn.disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+  .gearactions small { font-size: 12.5px; text-align: center; }
+  .update .btn { margin-left: auto; flex: none; }
+  .cmdbox { display: grid; gap: 8px; }
+  .cmdbox code { display: block; padding: 8px 10px; font-size: 12px; user-select: all; }
+  .cmdbox button { justify-self: start; }

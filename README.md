@@ -70,13 +70,13 @@ python3 --version        (Windows: py --version)
    | `POSBYTZ_PASSWORD` | PosBytz login password |
 
    `.env` is git-ignored and never comes from git. Create it by hand on every machine and never commit it.
-3. Install the Python requirements: double-click `commands/mac/install_requirements.command` (Mac) or `commands/windows/install_requirements.bat` (Windows), or run `python3 -m pip install -r requirements.txt`.
+3. Install the Python requirements: double-click `commands/mac/extras/install_requirements.command` (Mac) or `commands/windows/extras/install_requirements.bat` (Windows), or run `python3 -m pip install -r requirements.txt`.
 4. Run the setup check (below) to confirm everything is ready.
 5. Open `convert.html` in Chrome or Edge and choose the project folder once. After a restart the browser asks you to reconnect the folder with one click.
 
 ### Setup check
 
-Double-click `commands/mac/setup_check.command` (Mac) or `commands/windows/setup_check.bat` (Windows). It checks Git, Python, Selenium, Chrome, that the folder is a git clone and up to date, and that `.env` exists with `OPENAI_API_KEY`, `POSBYTZ_EMAIL` and `POSBYTZ_PASSWORD` filled in. Anything missing is shown with the command to fix it. It never prints your secret values.
+Double-click `commands/mac/extras/setup_check.command` (Mac) or `commands/windows/extras/setup_check.bat` (Windows). It checks Git, Python, Selenium, Chrome, that the folder is a git clone and up to date, and that `.env` exists with `OPENAI_API_KEY`, `POSBYTZ_EMAIL` and `POSBYTZ_PASSWORD` filled in. Anything missing is shown with the command to fix it. It never prints your secret values.
 
 On macOS, the first time you open a `.command` file, right-click it and choose Open. On Windows, SmartScreen may warn about a `.bat` file: click More info, then Run anyway.
 
@@ -106,6 +106,17 @@ The page checks GitHub when it opens. If this copy is older, an amber bar at the
 
 Run `commands/mac/update_code.command` or `commands/windows/update_code.bat`, or `git pull` in the project folder. Your `.env` is not touched. If the pull fails because you edited tracked files locally, run `git stash` and try again.
 
+## Buttons that start the commands (optional, one-time setup)
+
+The page has **Set up this computer**, **Update code** (only when a newer version exists) and **Run Selenium** buttons. A browser cannot start programs by itself, so each computer needs a one-time setup:
+
+- **Windows:** double-click `commands/windows/setup_computer.bat`. It installs what is missing, turns the page buttons on and runs the check. Needs no admin rights for the buttons.
+- **Mac:** double-click `commands/mac/setup_computer.command`. The buttons use a small helper app it creates in `~/Applications`.
+
+After that, the buttons open the same windows as double-clicking `setup_computer`, `update_code` and `run_selenium`. The link only carries one of those three words, so nothing else can be started. The first click may show "Open TruGreens Link?": allow it (tick "always allow"). If you move the folder, run `setup_computer` again.
+
+To turn the buttons off, run `extras/disable_page_buttons` (`.bat` on Windows, `.command` on Mac). To turn them on without the rest of the setup, run `extras/enable_page_buttons`. If your organisation blocks it, nothing is lost: double-click the files in `commands/` as before.
+
 ## Layout
 
 ```
@@ -127,7 +138,9 @@ prompts/
 commands/
   mac/                             double-click launchers for macOS (.command)
   windows/                         double-click launchers for Windows (.bat)
-    each folder has: run_selenium, install_requirements, update_code, setup_check
+    each folder has: setup_computer (run this first), update_code, run_selenium
+    extras/    optional: setup_check, install_requirements, enable_page_buttons, disable_page_buttons
+    internal/  used by the page buttons, not run by hand
 requirements.txt                   Python requirements
 .env.example                       template for .env
 ```

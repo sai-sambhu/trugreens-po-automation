@@ -30,3 +30,5 @@ prompts/items.txt
 prompts/chatgpt_promt.txt
 prompts/old/
 prompts_backup_*/
+
+.link_registered

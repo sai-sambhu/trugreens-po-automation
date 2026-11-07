@@ -1,6 +1,6 @@
 #!/bin/bash
 # Checks git, python, selenium, chrome, the repo and .env. Creates .env from the template if missing.
-cd "$(dirname "$0")/../.." || exit 1
+cd "$(dirname "$0")/../../.." || exit 1
 FAIL=0
 ok()   { echo "[ OK ]   $1"; }
 fix()  { echo "[FIX ]   $1"; FAIL=1; }
@@ -17,7 +17,7 @@ else fix "Git is missing. Install: xcode-select --install   (or: brew install gi
 if command -v python3 >/dev/null 2>&1; then
   ok "Python $(python3 --version 2>&1 | awk '{print $2}')"
   if python3 -c "import selenium" >/dev/null 2>&1; then ok "Selenium installed"
-  else fix "Selenium is missing. Run commands/mac/install_requirements.command"; fi
+  else fix "Selenium is missing. Run commands/mac/setup_computer.command"; fi
 else
   fix "Python 3 is missing. Install: xcode-select --install   (or: brew install python)"
 fi

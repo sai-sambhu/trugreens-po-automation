@@ -337,3 +337,9 @@ function showReportTab() {
 }
 document.querySelectorAll('input[name="rtab"]').forEach((r) => r.addEventListener("change", showReportTab));
 showReportTab();
+
+/* ---------- settings gear: close when clicking elsewhere or after choosing an action ---------- */
+document.addEventListener("click", (e) => {
+  const g = $("gear");
+  if (g && g.open && (!g.contains(e.target) || e.target.closest("a"))) g.open = false;
+});

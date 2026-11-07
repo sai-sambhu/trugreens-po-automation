@@ -1,7 +1,7 @@
 @echo off
 rem Checks git, python, selenium, chrome, the repo and .env. Creates .env from the template if missing.
 setlocal
-cd /d "%~dp0..\.."
+cd /d "%~dp0..\..\.."
 set FAIL=0
 echo Checking setup in: %CD%
 echo.
@@ -31,7 +31,7 @@ if errorlevel 1 goto nosel
 echo [ OK ]   Selenium installed
 goto pydone
 :nosel
-echo [FIX ]   Selenium is missing. Run commands\windows\install_requirements.bat
+echo [FIX ]   Selenium is missing. Run commands\windows\setup_computer.bat
 set FAIL=1
 goto pydone
 :nopy
