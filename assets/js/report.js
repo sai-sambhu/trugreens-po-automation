@@ -107,7 +107,7 @@ async function addReportFiles(fileList) {
       if (!rows) { notes.push(`${file.name}: not one of the three exports, skipped.`); continue; }
       const count = rows.filter((r) => String(r[EXPORTS[kind].sku.toLowerCase()] ?? "").trim()).length;
       const replaced = reportFiles[kind] && reportFiles[kind].name !== file.name;
-      reportFiles[kind] = { name: file.name, rows, count, modified: file.lastModified };
+      reportFiles[kind] = { name: file.name, rows, count, modified: exportTime(file) };
       if (replaced) notes.push(`${KIND_LABEL[kind]}: replaced by ${file.name}.`);
     } catch { notes.push(`${file.name}: could not be opened, skipped.`); }
   }
@@ -268,6 +268,14 @@ const AUTO_PATTERNS = {
   stock: /stocks?\b|stocks?[_\-. ]/i,
 };
 const EXPORT_EXT = /\.(csv|xlsx|xls)$/i;
+// When was this export made? PosBytz puts the time (UTC, in milliseconds) in the file name, e.g. export_stocks_1793975226960.csv.
+// That is used first, because a file that was re-saved or copied later keeps its name but gets a new "modified" date.
+// Only a name without such a number falls back to the modified date.
+const exportTime = (file) => {
+  const m = file.name.match(/(?<!\d)(\d{13})(?!\d)/);
+  const ms = m ? Number(m[1]) : NaN;
+  return ms > 1.5e12 && ms < 2.5e12 ? ms : file.lastModified;
+};
 const kindOfDownload = (name) => {
   if (!EXPORT_EXT.test(name) || /^stock report/i.test(name)) return null;   // "Stock Report ....xlsx" is this tool's own output
   if (AUTO_PATTERNS.purchase.test(name)) return "purchase";
@@ -281,13 +289,13 @@ const kindOfDownload = (name) => {
 async function selectNewest(files) {
   delete reportFiles.purchase; delete reportFiles.sales; delete reportFiles.stock;
   for (const kind of Object.keys(EXPORTS)) {
-    const candidates = files.filter((f) => kindOfDownload(f.name) === kind).sort((a, b) => b.lastModified - a.lastModified);
+    const candidates = files.filter((f) => kindOfDownload(f.name) === kind).sort((a, b) => exportTime(b) - exportTime(a) || b.lastModified - a.lastModified);
     for (const file of candidates) {
       try {
         const rows = toObjects(await readSheetRows(file), kind);
         if (!rows) continue;
         const count = rows.filter((r) => String(r[EXPORTS[kind].sku.toLowerCase()] ?? "").trim()).length;
-        reportFiles[kind] = { name: file.name, rows, count, modified: file.lastModified };
+        reportFiles[kind] = { name: file.name, rows, count, modified: exportTime(file) };
         break;
       } catch { /* try the next one */ }
     }

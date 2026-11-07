@@ -35,6 +35,15 @@ def download_dirs():
     return dirs
 
 
+def export_time(path):
+    """When the export was made. PosBytz puts the time (UTC, milliseconds) in the file name, e.g. export_stocks_1793975226960.csv.
+    It is used first, because a file that was re-saved or copied later keeps its name but gets a new modified date.
+    A name without such a number falls back to the modified date."""
+    m = re.search(r"(?<!\d)(\d{13})(?!\d)", os.path.basename(path))
+    ms = int(m.group(1)) if m else 0
+    return ms / 1000.0 if 1.5e12 < ms < 2.5e12 else os.path.getmtime(path)
+
+
 def kind_of(name):
     low = name.lower()
     if not low.endswith(EXT) or low.startswith("stock report"):  # "Stock Report ...xlsx" is this tool's own output
@@ -69,13 +78,13 @@ def main():
             path = os.path.join(d, name)
             kind = kind_of(name)
             if kind and os.path.isfile(path):
-                candidates[kind].append((os.path.getmtime(path), path))
+                candidates[kind].append((export_time(path), os.path.getmtime(path), path))
 
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
     picked = {}
     for kind, items in candidates.items():
-        for _, path in sorted(items, reverse=True):  # newest first; fall back to the next one if the contents do not match
+        for _, _, path in sorted(items, reverse=True):  # newest first; fall back to the next one if the contents do not match
             if csv_ok(path, KINDS[kind][1]):
                 shutil.copy2(path, os.path.join(OUT, os.path.basename(path)))
                 picked[kind] = os.path.basename(path)
