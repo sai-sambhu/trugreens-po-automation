@@ -1,0 +1,5 @@
+# Page buttons: <word in the link>=<file in commands/mac or commands/windows, without .command / .bat>
+# Only the files listed here can be started from the page. To add a feature, add a line here and its script.
+update=update_code
+setup=setup_computer
+run=run_selenium

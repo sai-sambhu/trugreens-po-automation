@@ -113,7 +113,7 @@ The page has **Check computer health**, **Update code** (only when a newer versi
 - **Windows:** double-click `commands/windows/setup_computer.bat`.
 - **Mac:** double-click `commands/mac/setup_computer.command`. The buttons use a small helper app it creates in `~/Applications`.
 
-`setup_computer` checks Git, Python, Chrome, the Python packages, the repo and `.env`, installs what is missing, and turns the page buttons on. After that, the buttons open the same windows as double-clicking `setup_computer`, `update_code` and `run_selenium`. The link only carries one of those three words, so nothing else can be started. The first click may show "Open TruGreens Link?": allow it. If you move the folder, run `setup_computer` again.
+`setup_computer` checks Git, Python, Chrome, the Python packages, the repo and `.env`, installs what is missing, and turns the page buttons on. After that, the buttons open the same windows as double-clicking `setup_computer`, `update_code` and `run_selenium`. The link only carries a word listed in `commands/links.txt` (update, setup, run), so nothing else can be started. To add a feature button later, add one line there with its script: new buttons then arrive with `update_code`, no setup needed. The first click may show "Open TruGreens Link?": allow it. If you move the folder, run `setup_computer` again.
 
 To turn the buttons off, run `deregister_links` (`.bat` on Windows, `.command` on Mac). If your organisation blocks the buttons, nothing is lost: double-click the files in `commands/` as before.
 

@@ -10,14 +10,21 @@ if /i "%~1"=="--link" goto link
 goto main
 
 :link
-rem A page button was clicked: only these three words are accepted.
+rem A page button was clicked. Allowed words and their files are listed in commands\links.txt.
 set "ACT=%~2"
 set "ACT=%ACT:trugreens://=%"
 set "ACT=%ACT:/=%"
-if /i "%ACT%"=="update" ( call "%~dp0update_code.bat" & exit /b )
-if /i "%ACT%"=="run"    ( call "%~dp0run_selenium.bat" & exit /b )
-if /i "%ACT%"=="setup"  goto main
-echo Unknown action: "%ACT%". Allowed: update, setup, run.
+set "TARGET="
+echo %ACT%| findstr /r /c:"^[A-Za-z0-9_][A-Za-z0-9_]*$" >nul || goto badlink
+for /f "usebackq eol=# tokens=1,* delims==" %%a in ("%~dp0..\links.txt") do if /i "%%a"=="%ACT%" set "TARGET=%%b"
+if not defined TARGET goto badlink
+echo %TARGET%| findstr /r /c:"^[A-Za-z0-9_][A-Za-z0-9_]*$" >nul || goto badlink
+if /i "%TARGET%"=="setup_computer" goto main
+if not exist "%~dp0%TARGET%.bat" goto badlink
+call "%~dp0%TARGET%.bat"
+exit /b
+:badlink
+echo Unknown action: "%ACT%".
 pause
 exit /b
 

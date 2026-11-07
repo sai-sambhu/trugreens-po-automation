@@ -4,17 +4,14 @@
 DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$DIR/../.." && pwd)"
 
-# ---- A page button was clicked: only these three words are accepted.
+# ---- A page button was clicked. Allowed words and their files are listed in commands/links.txt.
 if [ "$1" = "--link" ]; then
   ACT="${2#trugreens://}"; ACT="${ACT//\//}"
-  case "$ACT" in
-    update) F="update_code.command" ;;
-    setup)  F="setup_computer.command" ;;
-    run)    F="run_selenium.command" ;;
-    *) exit 1 ;;
-  esac
-  chmod +x "$DIR/$F" 2>/dev/null
-  open -a Terminal "$DIR/$F"
+  [[ "$ACT" =~ ^[a-z0-9_]+$ ]] || exit 1
+  NAME="$(sed -n "s/^$ACT=\(.*\)$/\1/p" "$DIR/../links.txt" 2>/dev/null | head -1 | tr -d '\r ')"
+  [[ "$NAME" =~ ^[a-z0-9_]+$ ]] && [ -f "$DIR/$NAME.command" ] || exit 1
+  chmod +x "$DIR/$NAME.command" 2>/dev/null
+  open -a Terminal "$DIR/$NAME.command"
   exit 0
 fi
 
