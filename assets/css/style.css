@@ -268,3 +268,14 @@
   .cmdbox button { justify-self: start; }
   .gearsetup .altway { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); }
   .gearsetup .altway code { font-size: 11.5px; }
+
+  /* Run Selenium panel */
+  .runpanel { margin-top: 16px; display: grid; gap: 14px; }
+  .runmain { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  a.btn.big { padding: 11px 24px; font-size: 15px; border-radius: 10px; }
+  a.btn svg { width: 14px; height: 14px; vertical-align: -1px; margin-right: 8px; }
+  .runnote { margin: 0; font-size: 13.5px; flex: 1 1 260px; }
+  .manual { margin: 0; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: var(--surface-2); }
+  .manual summary { font-size: 13.5px; }
+  .manual p { font-size: 13px; margin: 10px 0 8px; }
+  .manual .cmdbox code { font-size: 12.5px; user-select: all; }

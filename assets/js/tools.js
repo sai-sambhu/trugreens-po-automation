@@ -62,6 +62,7 @@ async function refreshTools() {
   }
   acts.classList.toggle("hidden", !ok);
   $("runLink").classList.toggle("hidden", !ok);
+  $("manualRun").open = !ok;   // no button yet: show the manual way straight away
   // Update code is only enabled when the version check found the code outdated.
   const outdated = !!window.APP_OUTDATED;
   const up = $("gearUpdate");

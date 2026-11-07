@@ -104,7 +104,7 @@
   </section>
 
   <section id="next" class="card hidden">
-    <div class="card-head"><span class="step">3</span><h2>Selenium</h2></div>
+    <div class="card-head"><span class="step">3</span><h2>Run Selenium</h2></div>
     <div id="go" class="go">
       <div id="goMark" class="mark"></div>
       <div>
@@ -112,10 +112,19 @@
         <div id="goText" class="muted"></div>
       </div>
     </div>
-    <div id="goActions" class="row" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px">
-      <button id="copyBtn" class="primary">Copy run command</button>
-      <code id="runCmd"></code>
-      <a id="runLink" class="btn primary hidden" href="trugreens://run" title="Runs run_selenium">Run Selenium</a>
+    <div id="goActions" class="runpanel">
+      <div class="runmain">
+        <a id="runLink" class="btn primary big hidden" href="trugreens://run" title="Runs run_selenium">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+          Run Selenium
+        </a>
+        <p class="runnote muted">Chrome opens, logs in to PosBytz and fills the purchase order. Review it before saving.</p>
+      </div>
+      <details id="manualRun" class="manual">
+        <summary>Run it by hand instead</summary>
+        <p class="muted">Double-click <b>run_selenium</b> in the <code>commands</code> folder for your system, or paste this in a terminal:</p>
+        <div class="cmdbox"><code id="runCmd"></code><button id="copyBtn" class="small" type="button">Copy</button></div>
+      </details>
     </div>
   </section>
   </div>

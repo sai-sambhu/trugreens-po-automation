@@ -472,9 +472,9 @@ $("copyBtn").addEventListener("click", async () => {
     await navigator.clipboard.writeText(runCommand);
     $("copyBtn").textContent = "Copied";
   } catch {
-    $("copyBtn").textContent = "Copy it from the box";
+    $("copyBtn").textContent = "Select it in the box";
   }
-  setTimeout(() => ($("copyBtn").textContent = "Copy run command"), 2000);
+  setTimeout(() => ($("copyBtn").textContent = "Copy"), 2000);
 });
 
 /* ---------- attachments (Excel, PDF, Word -> plain text) ---------- */
