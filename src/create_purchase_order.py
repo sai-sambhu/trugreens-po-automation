@@ -2,7 +2,7 @@ import json
 import os
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -13,6 +13,7 @@ from selenium.common.exceptions import (
     ElementClickInterceptedException,
     NoSuchElementException,
     StaleElementReferenceException,
+    TimeoutException,
 )
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -56,7 +57,10 @@ SHIP_TO_DROPDOWN_TOGGLE_XPATH = FORM + "//select[contains(@class, 'js_po-locatio
 SELECT2_SEARCH_INPUT_XPATH = "(//input[contains(@class, 'select2-search__field')])[last()]"
 SELECT2_FIRST_RESULT_XPATH = "(//ul[contains(@class, 'select2-results__options')])[last()]/li[contains(@class, 'select2-results__option')][1]"
 
-PO_DATE_INPUT_XPATH = FORM + "//input[contains(@class, 'js_delivery-date')]"
+# Expected delivery date field: gets today's date (IST). Billing date field: gets the date written in the message.
+EXPECTED_DATE_INPUT_XPATH = FORM + "//input[contains(@class, 'js_delivery-date')]"
+BILLING_DATE_INPUT_XPATH = "/html/body/div[1]/div[2]/main/div[4]/div[2]/div/div/form/div[2]/div[3]/div/div/input[1]"
+IST = timezone(timedelta(hours=5, minutes=30))
 DATE_PICKER = "(//div[contains(@class, 'daterangepicker') and contains(@style, 'block')])[last()]"
 DATE_MONTH_SELECT_XPATH = DATE_PICKER + "//select[contains(@class, 'monthselect')]"
 DATE_YEAR_SELECT_XPATH = DATE_PICKER + "//select[contains(@class, 'yearselect')]"
@@ -137,6 +141,32 @@ def safe_click(driver, element, timeout=5):
                 return
             time.sleep(0.5)
 
+
+
+def pick_date(driver, wait, input_xpath, date, label):
+    """Open a date field's calendar and choose `date` (year, month, day), then Apply if the calendar has that button."""
+    print(f"Setting {label}: {date.strftime('%Y-%m-%d')}")
+    date_input = wait.until(EC.element_to_be_clickable((By.XPATH, input_xpath)))
+    safe_click(driver, date_input)
+
+    year_select = wait.until(EC.presence_of_element_located((By.XPATH, DATE_YEAR_SELECT_XPATH)))
+    Select(year_select).select_by_value(str(date.year))
+
+    month_select = wait.until(EC.presence_of_element_located((By.XPATH, DATE_MONTH_SELECT_XPATH)))
+    Select(month_select).select_by_value(str(date.month - 1))
+
+    time.sleep(0.5)
+
+    day_cell_xpath = DATE_DAY_CELL_XPATH_TEMPLATE.format(day=date.day)
+    day_cell = wait.until(EC.element_to_be_clickable((By.XPATH, day_cell_xpath)))
+    safe_click(driver, day_cell)
+
+    try:
+        apply_button = WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, APPLY_DATE_BUTTON_XPATH)))
+        safe_click(driver, apply_button)
+    except TimeoutException:
+        pass  # some calendars close by themselves after a day is picked
+    time.sleep(0.5)
 
 def click_item_result(driver, sku, timeout=20):
     """Click the dropdown result whose SKU equals `sku`.
@@ -233,25 +263,11 @@ def main():
 
     click_matching_result(driver, SHIP_TO_SEARCH_TERM)
 
-    delivery_date = datetime.strptime(purchase_order["delivery_date"], "%Y-%m-%d")
-
-    delivery_date_input = wait.until(EC.element_to_be_clickable((By.XPATH, PO_DATE_INPUT_XPATH)))
-    safe_click(driver, delivery_date_input)
-
-    year_select = wait.until(EC.presence_of_element_located((By.XPATH, DATE_YEAR_SELECT_XPATH)))
-    Select(year_select).select_by_value(str(delivery_date.year))
-
-    month_select = wait.until(EC.presence_of_element_located((By.XPATH, DATE_MONTH_SELECT_XPATH)))
-    Select(month_select).select_by_value(str(delivery_date.month - 1))
-
-    time.sleep(0.5)
-
-    day_cell_xpath = DATE_DAY_CELL_XPATH_TEMPLATE.format(day=delivery_date.day)
-    day_cell = wait.until(EC.element_to_be_clickable((By.XPATH, day_cell_xpath)))
-    safe_click(driver, day_cell)
-
-    apply_date_button = wait.until(EC.element_to_be_clickable((By.XPATH, APPLY_DATE_BUTTON_XPATH)))
-    safe_click(driver, apply_date_button)
+    # Expected delivery = today in India (IST). Billing date = the date from the message.
+    today_ist = datetime.now(IST)
+    billing_date = datetime.strptime(purchase_order["delivery_date"], "%Y-%m-%d")
+    pick_date(driver, wait, EXPECTED_DATE_INPUT_XPATH, today_ist, "Expected delivery date")
+    pick_date(driver, wait, BILLING_DATE_INPUT_XPATH, billing_date, "Billing date")
 
     # category_toggle = wait.until(EC.element_to_be_clickable((By.XPATH, CATEGORY_DROPDOWN_TOGGLE_XPATH)))
     # safe_click(driver, category_toggle)

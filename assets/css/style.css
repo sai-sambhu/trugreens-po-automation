@@ -279,3 +279,10 @@
   .manual summary { font-size: 13.5px; }
   .manual p { font-size: 13px; margin: 10px 0 8px; }
   .manual .cmdbox code { font-size: 12.5px; user-select: all; }
+
+  /* logo image: shown on a light tile so it also looks right in dark mode */
+  .logoimg { width: 96px; height: 96px; object-fit: contain; border-radius: 16px; background: #fff; border: 1px solid var(--line);
+    box-shadow: var(--shadow); flex: none; }
+  .brand { gap: 16px; }
+  .brand h1 { font-size: 24px; }
+  @media (max-width: 560px) { .logoimg { width: 72px; height: 72px; border-radius: 13px; } .brand h1 { font-size: 20px; } }
