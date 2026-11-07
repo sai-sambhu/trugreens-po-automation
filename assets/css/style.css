@@ -266,3 +266,5 @@
   .cmdbox { display: grid; gap: 8px; }
   .cmdbox code { display: block; padding: 8px 10px; font-size: 12px; user-select: all; }
   .cmdbox button { justify-self: start; }
+  .gearsetup .altway { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); }
+  .gearsetup .altway code { font-size: 11.5px; }

@@ -1,11 +1,30 @@
 @echo off
-rem Sets up this computer in one go: installs what is missing (Git, Python, Chrome) with winget, installs the Python
-rem packages, then runs the setup check. Never asks for or prints passwords.
+rem One file for the whole setup: checks this computer, installs what is missing (Git, Python, Chrome) with winget,
+rem turns the page buttons on, and reports. The page buttons also call this file ("--link <word>").
+rem Never asks for or prints passwords.
 setlocal
 cd /d "%~dp0..\.."
+set "ROOT=%CD%"
+set "SELF=%~dp0setup_computer.bat"
+if /i "%~1"=="--link" goto link
+goto main
+
+:link
+rem A page button was clicked: only these three words are accepted.
+set "ACT=%~2"
+set "ACT=%ACT:trugreens://=%"
+set "ACT=%ACT:/=%"
+if /i "%ACT%"=="update" ( call "%~dp0update_code.bat" & exit /b )
+if /i "%ACT%"=="run"    ( call "%~dp0run_selenium.bat" & exit /b )
+if /i "%ACT%"=="setup"  goto main
+echo Unknown action: "%ACT%". Allowed: update, setup, run.
+pause
+exit /b
+
+:main
 set INSTALLED=0
 set FAIL=0
-echo Setting up this computer...
+echo Checking and setting up this computer in: %ROOT%
 echo.
 
 where winget >nul 2>nul
@@ -58,37 +77,93 @@ if errorlevel 1 (
 )
 echo [ OK ]   Python packages ^(Selenium^)
 
-rem ---- Page buttons (trugreens:// links)
-call "%~dp0extras\enable_page_buttons.bat" quiet >nul 2>nul
-if errorlevel 1 (
-  echo [WARN]   Page buttons could not be registered here ^(your organisation may block it^). The scripts in commands still work.
-) else (
-  echo [ OK ]   Page buttons registered ^(Update code, Set up, Run Selenium^)
-)
+rem ---- Page buttons (trugreens:// links), written to your own user settings only
+reg add "HKCU\Software\Classes\trugreens" /ve /d "URL:TruGreens Link" /f >nul 2>nul
+reg add "HKCU\Software\Classes\trugreens" /v "URL Protocol" /d "" /f >nul 2>nul
+reg add "HKCU\Software\Classes\trugreens\shell\open\command" /ve /d "\"%SELF%\" --link \"%%1\"" /f >nul 2>nul
+if errorlevel 1 goto linkfail
+> "%ROOT%\.link_registered" echo %ROOT%
+>> "%ROOT%\.link_registered" echo v3
+echo [ OK ]   Page buttons registered ^(Update code, Check health, Run Selenium^)
+goto linkdone
+:linkfail
+echo [WARN]   Page buttons could not be registered here ^(your organisation may block it^). The files in commands still work.
+:linkdone
 
-rem ---- Final check
+rem ---- Repo
+if not exist .git goto norepo
+git fetch --quiet origin >nul 2>nul
+if errorlevel 1 goto fetchfail
+set BEHIND=0
+for /f %%n in ('git rev-list --count HEAD..origin/main 2^>nul') do set BEHIND=%%n
+if "%BEHIND%"=="0" goto repouptodate
+echo [UPDATE] %BEHIND% new commits on GitHub. Click Update code on the page, or run commands\windows\update_code.bat
+goto repodone
+:repouptodate
+echo [ OK ]   Repo is up to date
+goto repodone
+:fetchfail
+echo [WARN]   Could not reach GitHub. Repo status unknown.
+goto repodone
+:norepo
+echo [FIX ]   This folder is not a git clone. Clone it: git clone https://github.com/sai-sambhu/trugreens-po-automation.git
+set FAIL=1
+:repodone
+
+rem ---- .env
+if exist .env goto envexists
+if not exist .env.example goto noexample
+copy .env.example .env >nul
+echo [CREATED] .env was missing. Created it from .env.example. Opening it in Notepad: fill in the values and save.
+set FAIL=1
+start notepad .env
+goto envdone
+:noexample
+echo [FIX ]   .env and .env.example are both missing. Run commands\windows\update_code.bat
+set FAIL=1
+goto envdone
+:envexists
+set MISSINGKEYS=
+findstr /b /r /c:"OPENAI_API_KEY=." .env >nul || set MISSINGKEYS=%MISSINGKEYS% OPENAI_API_KEY
+findstr /b /r /c:"POSBYTZ_EMAIL=." .env >nul || set MISSINGKEYS=%MISSINGKEYS% POSBYTZ_EMAIL
+findstr /b /r /c:"POSBYTZ_PASSWORD=." .env >nul || set MISSINGKEYS=%MISSINGKEYS% POSBYTZ_PASSWORD
+if defined MISSINGKEYS goto envmissing
+echo [ OK ]   .env has all required values
+goto envdone
+:envmissing
+echo [FIX ]   .env is missing values for:%MISSINGKEYS%
+set FAIL=1
+:envdone
+
 echo.
-call "%~dp0extras\setup_check.bat"
+if "%FAIL%"=="0" goto allgood
+echo Fix the items above, then click "Check computer health" again.
+goto end
+:allgood
+echo All good. Open convert.html to start.
+:end
+echo.
+pause
 exit /b
 
 :restart
 echo.
 echo Something was just installed. Windows does not see new programs in this window.
-echo Please close this window, then click "Set up this computer" again to finish.
+echo Please close this window, then click "Check computer health" again to finish.
 echo.
 pause
 exit /b
 
 :failed
 echo.
-echo Some steps could not finish (see the lines above). Fix them, then click "Set up this computer" again.
+echo Some steps could not finish ^(see the lines above^). Fix them, then click "Check computer health" again.
 echo.
 pause
 exit /b
 
 :install
 if "%WINGET%"=="0" goto noget
-echo Installing %~2 (Windows may ask for permission)...
+echo Installing %~2 ^(Windows may ask for permission^)...
 winget install --id %1 -e --source winget --accept-package-agreements --accept-source-agreements
 if errorlevel 1 goto instfail
 set INSTALLED=1

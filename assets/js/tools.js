@@ -1,5 +1,5 @@
 /* Computer tools (gear menu). The buttons only appear once setup_computer has been run for THIS folder.
-   setup_computer (enable_page_buttons) writes the folder path into ".link_registered" inside the project folder; the page reads it and
+   setup_computer writes the folder path into ".link_registered" inside the project folder; the page reads it and
    compares it with the folder it was opened from. Unregister deletes the file. */
 const LINK_MARKER = ".link_registered";
 
@@ -20,7 +20,8 @@ function setupCommand() {
   if (here) return `cmd /c "${here.replace(/^\//, "").replace(/\//g, "\\")}\\commands\\windows\\setup_computer.bat"`;
   return "commands\\windows\\setup_computer.bat";
 }
-const cmdBox = () => `<div class="cmdbox"><code class="path" id="setupCmd"></code><button type="button" class="small" id="copySetup">Copy</button></div>`;
+const cmdBox = () => `<div class="cmdbox"><code class="path" id="setupCmd"></code><button type="button" class="small" id="copySetup">Copy</button></div>
+    <p class="altway"><b>Or without Terminal:</b> in the project folder, double-click <code>${registerFile}</code>.</p>`;
 
 async function linkState() {
   if (typeof dir === "undefined" || !dir) return { s: "nofolder" };
@@ -29,7 +30,7 @@ async function linkState() {
   catch { return { s: "missing" }; }
   const lines = text.split(/\r?\n/);
   const reg = lines[0].trim();
-  if ((lines[1] || "").trim() !== "v2") return { s: "old" };   // set up with an older layout: the registered link no longer points at the right file
+  if ((lines[1] || "").trim() !== "v3") return { s: "old" };   // set up with an older layout: the registered link no longer points at the right file
   const here = pageFolder();
   if (here && normPath(reg) !== here) return { s: "moved", reg };
   return { s: "ok" };

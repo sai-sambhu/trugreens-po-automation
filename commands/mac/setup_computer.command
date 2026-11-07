@@ -1,49 +1,125 @@
 #!/bin/bash
-# Sets up this Mac in one go: Apple's command line tools (Git + Python), Chrome if Homebrew is there, the Python
-# packages, then the setup check. Never asks for or prints passwords.
+# One file for the whole setup: checks this Mac, installs what is missing, turns the page buttons on, and reports.
+# The page buttons also call this file ("--link <word>"). Never asks for or prints passwords.
 DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$DIR/../.." || exit 1
+ROOT="$(cd "$DIR/../.." && pwd)"
+
+# ---- A page button was clicked: only these three words are accepted.
+if [ "$1" = "--link" ]; then
+  ACT="${2#trugreens://}"; ACT="${ACT//\//}"
+  case "$ACT" in
+    update) F="update_code.command" ;;
+    setup)  F="setup_computer.command" ;;
+    run)    F="run_selenium.command" ;;
+    *) exit 1 ;;
+  esac
+  chmod +x "$DIR/$F" 2>/dev/null
+  open -a Terminal "$DIR/$F"
+  exit 0
+fi
+
+cd "$ROOT" || exit 1
 FAIL=0
-echo "Setting up this Mac..."
+ok()   { echo "[ OK ]   $1"; }
+fix()  { echo "[FIX ]   $1"; FAIL=1; }
+warn() { echo "[WARN]   $1"; }
+echo "Checking and setting up this Mac in: $ROOT"
 echo
 
-# Git and Python come with Apple's command line tools.
+# ---- Git and Python come with Apple's command line tools.
 if ! xcode-select -p >/dev/null 2>&1; then
   echo "Installing Apple's command line tools (Git and Python)..."
   xcode-select --install >/dev/null 2>&1
   echo
   echo "An Apple window opened. Click Install and wait until it finishes."
-  echo "Then click \"Set up this computer\" again to finish."
+  echo "Then click \"Check computer health\" again to finish."
   echo; read -n 1 -s -r -p "Press any key to close."; exit 0
 fi
-echo "[ OK ]   Git and Python"
+ok "Git $(git --version | awk '{print $3}')"
+ok "Python $(python3 --version 2>&1 | awk '{print $2}')"
 
-# Chrome
+# ---- Chrome
 if [ -d "/Applications/Google Chrome.app" ]; then
-  echo "[ OK ]   Google Chrome"
+  ok "Google Chrome"
 elif command -v brew >/dev/null 2>&1; then
   echo "Installing Google Chrome..."
-  brew install --cask google-chrome || { echo "[FIX ]   Chrome could not be installed. Get it from https://www.google.com/chrome/"; FAIL=1; }
+  brew install --cask google-chrome || fix "Chrome could not be installed. Get it from https://www.google.com/chrome/"
 else
-  echo "[FIX ]   Google Chrome is missing. Get it from https://www.google.com/chrome/"
-  FAIL=1
+  fix "Google Chrome is missing. Get it from https://www.google.com/chrome/"
 fi
 
-# Python packages (Selenium etc.): quiet, the full output is shown only if it fails
+# ---- Python packages (Selenium etc.): quiet, the full output is shown only if it fails
 if OUT="$(python3 -m pip install -q --disable-pip-version-check -r requirements.txt 2>&1)"; then
-  echo "[ OK ]   Python packages (Selenium)"
+  ok "Python packages (Selenium)"
 else
   echo "$OUT"
-  echo "[FIX ]   The package install failed (details above). Check your internet connection and try again."
-  FAIL=1
+  fix "The package install failed (details above). Check your internet connection and try again."
 fi
 
-# Page buttons (trugreens:// links)
-if bash "$DIR/extras/enable_page_buttons.command" quiet >/dev/null 2>&1; then
-  echo "[ OK ]   Page buttons registered (Update code, Set up, Run Selenium)"
+# ---- Page buttons (trugreens:// links): a small helper app in ~/Applications
+APP="$HOME/Applications/TruGreens Link.app"
+LSR=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+chmod +x "$DIR"/*.command
+mkdir -p "$HOME/Applications"
+rm -rf "$APP"
+TMP="$(mktemp /tmp/tglink.XXXXXX)"
+cat > "$TMP" <<AS
+on open location theURL
+	do shell script "/bin/bash " & quoted form of "$DIR/setup_computer.command" & " --link " & quoted form of theURL & " >/dev/null 2>&1 &"
+end open location
+AS
+if osacompile -o "$APP" "$TMP" 2>/dev/null; then
+  P="$APP/Contents/Info.plist"; PB=/usr/libexec/PlistBuddy
+  $PB -c "Add :CFBundleIdentifier string com.trugreens.link" "$P" 2>/dev/null || $PB -c "Set :CFBundleIdentifier com.trugreens.link" "$P"
+  $PB -c "Add :LSUIElement bool true" "$P" 2>/dev/null
+  $PB -c "Add :CFBundleURLTypes array" "$P"
+  $PB -c "Add :CFBundleURLTypes:0 dict" "$P"
+  $PB -c "Add :CFBundleURLTypes:0:CFBundleURLName string TruGreens Link" "$P"
+  $PB -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$P"
+  $PB -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string trugreens" "$P"
+  codesign --force --sign - "$APP" >/dev/null 2>&1
+  "$LSR" -f "$APP"
+  printf '%s\nv3\n' "$ROOT" > "$ROOT/.link_registered"
+  ok "Page buttons registered (Update code, Check health, Run Selenium)"
 else
-  echo "[WARN]   Page buttons could not be registered here. The scripts in commands still work."
+  warn "Page buttons could not be registered here. The files in commands still work."
+fi
+rm -f "$TMP"
+
+# ---- Repo
+if [ -d .git ]; then
+  if git fetch --quiet origin >/dev/null 2>&1; then
+    BEHIND=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo 0)
+    if [ "$BEHIND" = "0" ]; then ok "Repo is up to date"
+    else echo "[UPDATE] $BEHIND new commit(s) on GitHub. Click Update code on the page, or run commands/mac/update_code.command"; fi
+  else
+    warn "Could not reach GitHub (offline?). Repo status unknown."
+  fi
+else
+  fix "This folder is not a git clone. Clone it: git clone https://github.com/sai-sambhu/trugreens-po-automation.git"
+fi
+
+# ---- .env
+if [ ! -f .env ]; then
+  if [ -f .env.example ]; then
+    cp .env.example .env
+    echo "[CREATED] .env was missing. Created it from .env.example. Opening it: fill in the values and save."
+    open -t .env
+    FAIL=1
+  else
+    fix ".env and .env.example are both missing. Run commands/mac/update_code.command"
+  fi
+else
+  MISSING=""
+  for KEY in OPENAI_API_KEY POSBYTZ_EMAIL POSBYTZ_PASSWORD; do
+    grep -q "^$KEY=." .env || MISSING="$MISSING $KEY"
+  done
+  if [ -z "$MISSING" ]; then ok ".env has all required values"
+  else fix ".env is missing values for:$MISSING"; fi
 fi
 
 echo
-bash "$DIR/extras/setup_check.command"
+if [ "$FAIL" = "0" ]; then echo "All good. Open convert.html to start."
+else echo "Fix the items above, then click \"Check computer health\" again."; fi
+echo
+read -n 1 -s -r -p "Press any key to close."
