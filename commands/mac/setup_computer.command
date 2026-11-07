@@ -9,6 +9,12 @@ if [ "$1" = "--link" ]; then
   ACT="${2#trugreens://}"; ACT="${ACT//\//}"
   [[ "$ACT" =~ ^[a-z0-9_]+$ ]] || exit 1
   NAME="$(sed -n "s/^$ACT=\(.*\)$/\1/p" "$DIR/../links.txt" 2>/dev/null | head -1 | tr -d '\r ')"
+  if [[ "$NAME" == py:* ]]; then   # a quiet helper script in src/, no window
+    NAME="${NAME#py:}"
+    [[ "$NAME" =~ ^[a-z0-9_]+$ ]] && [ -f "$ROOT/src/$NAME.py" ] || exit 1
+    nohup python3 "$ROOT/src/$NAME.py" >/dev/null 2>&1 &
+    exit 0
+  fi
   [[ "$NAME" =~ ^[a-z0-9_]+$ ]] && [ -f "$DIR/$NAME.command" ] || exit 1
   chmod +x "$DIR/$NAME.command" 2>/dev/null
   open -a Terminal "$DIR/$NAME.command"

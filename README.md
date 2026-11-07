@@ -150,3 +150,12 @@ Generated per run and git-ignored: `purchase_orders.json`.
 1. Add the item list to `prompts/items/` (`Variation Name<tab>Sku`, plus `Count or Weight` if units vary).
 2. Add a rules file to `prompts/rules/` with that vendor's rules (vendor name, units, matching).
 3. Add one line to `TABS` near the top of `assets/js/app.js`: label, list file, rules files (`core.txt` plus yours), and `vendor` / `pcOnly` if the tab belongs to one vendor and is all pieces. The tab button appears by itself.
+
+## Stock Report
+
+Open `convert.html`, switch to **Stock Report**, and add the three PosBytz exports (purchase order items, order items, stocks). Drop them in the box, or click **Auto-select latest from Downloads**:
+
+- With the page buttons set up (see above), that button finds the newest of each export in your Downloads folder in one click, with no file window. A small script (`src/fetch_exports.py`) copies them into `exports/` (not saved to git) and the page reads them from there.
+- Without the page buttons, it opens a file window in Downloads instead: press Ctrl+A (Cmd+A on Mac), then Open. The newest of each export is chosen; a file with the right name but the wrong columns is skipped.
+
+The report has two tabs (item-wise and category-wise), both with filters, and **Download Excel** saves them as two sheets.

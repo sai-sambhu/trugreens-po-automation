@@ -32,3 +32,5 @@ prompts/old/
 prompts_backup_*/
 
 .link_registered
+
+exports/

@@ -18,7 +18,11 @@ set "TARGET="
 echo %ACT%| findstr /r /c:"^[A-Za-z0-9_][A-Za-z0-9_]*$" >nul || goto badlink
 for /f "usebackq eol=# tokens=1,* delims==" %%a in ("%~dp0..\links.txt") do if /i "%%a"=="%ACT%" set "TARGET=%%b"
 if not defined TARGET goto badlink
+set "KIND=bat"
+if /i "%TARGET:~0,3%"=="py:" set "KIND=py"
+if "%KIND%"=="py" set "TARGET=%TARGET:~3%"
 echo %TARGET%| findstr /r /c:"^[A-Za-z0-9_][A-Za-z0-9_]*$" >nul || goto badlink
+if "%KIND%"=="py" goto runpy
 if /i "%TARGET%"=="setup_computer" goto main
 if not exist "%~dp0%TARGET%.bat" goto badlink
 call "%~dp0%TARGET%.bat"
@@ -26,6 +30,19 @@ exit /b
 :badlink
 echo Unknown action: "%ACT%".
 pause
+exit /b
+:runpy
+rem a quiet helper script in src\, no pause
+if not exist "%ROOT%\src\%TARGET%.py" exit /b
+set PYQ=
+py -3 --version >nul 2>nul
+if not errorlevel 1 set PYQ=py -3
+if defined PYQ goto runpy2
+python --version >nul 2>nul
+if not errorlevel 1 set PYQ=python
+:runpy2
+if not defined PYQ exit /b
+%PYQ% "%ROOT%\src\%TARGET%.py" >nul 2>nul
 exit /b
 
 :main

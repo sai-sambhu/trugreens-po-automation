@@ -269,22 +269,31 @@ const AUTO_PATTERNS = {
 };
 const EXPORT_EXT = /\.(csv|xlsx|xls)$/i;
 const kindOfDownload = (name) => {
-  if (!EXPORT_EXT.test(name)) return null;
+  if (!EXPORT_EXT.test(name) || /^stock report/i.test(name)) return null;   // "Stock Report ....xlsx" is this tool's own output
   if (AUTO_PATTERNS.purchase.test(name)) return "purchase";
   if (AUTO_PATTERNS.sales.test(name)) return "sales";
   if (AUTO_PATTERNS.stock.test(name)) return "stock";
   return null;
 };
 
-// From any list of files, keep only the newest of each kind and load them.
+// From any list of files, keep the newest of each kind. If the newest one is not really that export (checked by its
+// columns), the next newest is tried, and so on.
 async function selectNewest(files) {
-  const newest = {};
-  for (const file of files) {
-    const kind = kindOfDownload(file.name);
-    if (kind && (!newest[kind] || file.lastModified > newest[kind].lastModified)) newest[kind] = file;
-  }
   delete reportFiles.purchase; delete reportFiles.sales; delete reportFiles.stock;
-  await addReportFiles(Object.values(newest));
+  for (const kind of Object.keys(EXPORTS)) {
+    const candidates = files.filter((f) => kindOfDownload(f.name) === kind).sort((a, b) => b.lastModified - a.lastModified);
+    for (const file of candidates) {
+      try {
+        const rows = toObjects(await readSheetRows(file), kind);
+        if (!rows) continue;
+        const count = rows.filter((r) => String(r[EXPORTS[kind].sku.toLowerCase()] ?? "").trim()).length;
+        reportFiles[kind] = { name: file.name, rows, count, modified: file.lastModified };
+        break;
+      } catch { /* try the next one */ }
+    }
+  }
+  $("reportNotes").innerHTML = "";
+  paintChecklist();
   const missing = Object.keys(EXPORTS).filter((k) => !reportFiles[k]).map((k) => KIND_LABEL[k]);
   $("autoHint").textContent = missing.length
     ? `Not found: ${missing.join(", ")}. Add them above, or check the selection.`
@@ -295,8 +304,8 @@ async function selectNewest(files) {
 const pickerError = (e) => ($("autoHint").textContent = e && e.name === "AbortError"
   ? "Nothing chosen." : "Could not read the files. Drop them in the box above instead.");
 
-// Main button: a file picker that opens in Downloads (Chrome blocks picking Downloads as a folder, but allows this).
-$("autoBtn").addEventListener("click", async () => {
+// Fallback: a file picker that opens in Downloads (Chrome blocks picking Downloads as a folder, but allows this).
+async function pickFromDownloadsDialog() {
   if (!window.showOpenFilePicker) { $("autoHint").textContent = "This browser cannot do this. Use Chrome or Edge, or drop the files above."; return; }
   try {
     const handles = await window.showOpenFilePicker({
@@ -305,6 +314,34 @@ $("autoBtn").addEventListener("click", async () => {
     });
     await selectNewest(await Promise.all(handles.map((h) => h.getFile())));
   } catch (e) { pickerError(e); }
+}
+
+// One click, no dialog: the page buttons link (trugreens://exports) runs a small script that copies the newest exports from
+// Downloads into the project's "exports" folder. The page already has that folder, so it reads them from there.
+async function fetchViaLink() {
+  if (typeof linkState !== "function" || (await linkState()).s !== "ok") return null;   // buttons not set up on this computer
+  const exp = await dir.getDirectoryHandle("exports", { create: true });
+  try { await exp.removeEntry(".ready"); } catch { /* none yet */ }
+  const a = document.createElement("a");
+  a.href = "trugreens://exports"; document.body.appendChild(a); a.click(); a.remove();
+  for (let i = 0; i < 40; i++) {   // wait up to about 16 seconds for the script to finish
+    await new Promise((r) => setTimeout(r, 400));
+    try { await exp.getFileHandle(".ready"); } catch { continue; }
+    const files = [];
+    for await (const entry of exp.values()) if (entry.kind === "file" && kindOfDownload(entry.name)) files.push(await entry.getFile());
+    return files;
+  }
+  return null;
+}
+
+$("autoBtn").addEventListener("click", async () => {
+  const hint = $("autoHint");
+  hint.textContent = "Looking in Downloads...";
+  let files = null;
+  try { files = await fetchViaLink(); } catch { files = null; }
+  if (files) { await selectNewest(files); return; }
+  hint.textContent = "One-click is not set up on this computer (run Check computer health from the gear menu). Pick the files instead:";
+  await pickFromDownloadsDialog();
 });
 
 // Second button: a normal folder (not Downloads itself), remembered after the first time.
