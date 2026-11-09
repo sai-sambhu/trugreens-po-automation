@@ -1,0 +1,18 @@
+UNITS (set by the list's third column, never by the name): Count -> pieces, Weight -> kg. The quantity is a plain number in the item's own unit.
+- The line already gives that unit (pc/pcs/piece for Count, kg for Weight) or only a bare number: copy the number as written ("Sorakaya 1pc" -> 1, "Carrot 5.125" -> 5.125).
+- "1 Pc" or "1 Kg" inside a list name is just part of the name; ignore it when reading units. The quantity is always the number in the message line ("Persimmon - 1 pc" -> "Persimmon 1 Pc", quantity 1).
+- Grams for a Weight item: 450 gm / 450g -> 0.45.
+- A line may give the same amount twice, one in brackets ("Drumstick 1.130 (52 pc)"): use the number that is in the item's own unit (Drumstick is Count -> 52). Ignore the other.
+- Weight item given in pieces, or Count item given in kg/grams: there is no conversion in waste. Put the line in "unmatched_items" with a reason like "Unit mismatch: <item> is Count (pc) but the line gave kg".
+
+MATCHING: match each line to one exact list item by spelling and meaning (Telugu/English names, typos). If no item fits, or two fit equally, put it in "unmatched_items" with candidates (never guess). Examples of what the list calls things:
+- Chikkudu -> "Chikkudu / Beans Broad "; Gokarakaya / Gokara / Cluster -> "Cluster Beans / Goru Chikkudu"; Haricot -> "Haricot Beans / French Beans "; Kakarakaya / Kakara -> "Kakarakaya / Bitter Gourd"; Aa kakara -> "Natu Aakakara"; Parval -> "Parval / Pointed gourd"; Dosa kaya -> "Dosakaya / Yellow Cucumber"; Beerakaya -> "Ridge Gourd / Beerakaya"; Sorakaya -> "Bottle Guard / Sorakaya 1 Pc"; Chamadumpa -> "Chamadumpa / colocasia"; Amla -> "Amla / Usiri" (not Sweet aawla); Tomato / Tomatos -> "Tomatoes"; Dark / Black mirchi -> "Dark Green Chilli / Black Mirchi"; Green mirchi -> "Green Mirchi / Green Chilli"; Drumstick -> "Drumstick 1 Pc"; Lemon -> "Lemon 1 Pc"; Cauliflower -> "Cauliflower 1 Pc"; Sweet corn -> "Sweet Corn 1 Pc".
+- Leafy items are Count (bunches): Kothimeer -> "kothimeera / Coriander"; Pudina -> "Pudina / Mint "; Gongura -> "Gongura / Sorrel Leaves"; Thotakura -> "Thotakura / Amaranthus" ("red" -> "Red Thotakura / Red Amaranthus"); Ponaganti -> "Ponaganti"; Chukkaura -> "Chukkakura"; Palak -> "Spinach / Palakura".
+- Methi / Menthi: line has "big" -> "Methi / Menthi - Big"; "small methi" -> "Microgreens Methi"; plain Methi/Menthi with no size -> "Methi / Menthi - Small".
+- Fruits: Dragon with no colour -> unmatched (candidates Red / White Dragon Fruit); Local orange -> "Local Orange"; Mandarin -> "Mandarin Orange"; Apple bear -> "Apple bear"; Pomogranate -> "Pomogranate"; Persimmon -> "Persimmon 1 Pc"; Thai guava -> "Thai Guava". A fruit not in the list (e.g. Star fruit) -> unmatched.
+
+BRINJALS: the word "Barta" (also Bharta/Bartha) must be in the line for any Barta item; Barta alone -> "Brinjal Barta Purple / Purple Eggplant", with "white" -> "Brinjal Barta White". Purple / Sara / Long / Green / Black / Natu brinjal -> that item. "All brinjals" (no kind named) is a GROUP, see below.
+
+GROUPS (the page splits these, so do not split them yourself): a line that gives one amount for a whole group becomes ONE item with "sku": "GROUP:<CODE>", "name": "<CODE>" and the amount as "quantity":
+- "All brinjals" / "all brinjal" -> CODE ALL_BRINJALS (kg, never Barta).
+- "Raw banana" / "Raw banana 3pcs" with no Big or Small -> CODE RAW_BANANA (pieces). If the line says Big or Small, use that item ("Raw Banana / Pachi Arati 1 Pc - Big" or "- Small") as a normal item.

@@ -83,7 +83,7 @@ if osacompile -o "$APP" "$TMP" 2>/dev/null; then
   codesign --force --sign - "$APP" >/dev/null 2>&1
   "$LSR" -f "$APP"
   printf '%s\nv3\n' "$ROOT" > "$ROOT/.link_registered"
-  ok "Page buttons registered (Update code, Check health, Run Selenium)"
+  ok "Page buttons registered (Update code, Check health, Create purchase order, Create waste entry)"
 else
   warn "Page buttons could not be registered here. The files in commands still work."
 fi
@@ -122,7 +122,7 @@ else
 fi
 
 echo
-if [ "$FAIL" = "0" ]; then echo "All good. Open convert.html to start."
+if [ "$FAIL" = "0" ]; then echo "All good. Open index.html to start."
 else echo "Fix the items above, then click \"Check computer health\" again."; fi
 echo
 read -n 1 -s -r -p "Press any key to close."

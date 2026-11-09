@@ -2,5 +2,6 @@
 # Only the files listed here can be started from the page. "py:name" runs src/name.py quietly in the background. To add a feature, add a line here and its script.
 update=update_code
 setup=setup_computer
-run=run_selenium
+purchase_order=selenium_create_purchase_order
 exports=py:fetch_exports
+waste_entry=selenium_create_waste_entry

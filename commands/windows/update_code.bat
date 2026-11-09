@@ -10,7 +10,7 @@ if not exist .git (
     echo Update failed. If you edited tracked files here, run: git stash   then run this again.
   ) else (
     echo.
-    echo Up to date. Reload convert.html in your browser.
+    echo Up to date. Reload index.html in your browser.
   )
 )
 echo.

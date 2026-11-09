@@ -16,10 +16,15 @@ document.querySelectorAll('input[name="view"]').forEach((r) => r.addEventListene
   const v = document.querySelector('input[name="view"]:checked').value;
   $("viewPO").classList.toggle("hidden", v !== "po");
   $("viewReport").classList.toggle("hidden", v !== "report");
+  $("viewWaste").classList.toggle("hidden", v !== "waste");
   document.body.classList.toggle("wide", v === "report");
   try { localStorage.setItem("tg_view", v); } catch {}
 }));
 try {
+  if (localStorage.getItem("tg_view") === "waste") {
+    document.querySelector('input[name="view"][value="waste"]').checked = true;
+    $("viewPO").classList.add("hidden"); $("viewWaste").classList.remove("hidden");
+  }
   if (localStorage.getItem("tg_view") === "report") {
     document.querySelector('input[name="view"][value="report"]').checked = true;
     $("viewPO").classList.add("hidden"); $("viewReport").classList.remove("hidden"); document.body.classList.add("wide");

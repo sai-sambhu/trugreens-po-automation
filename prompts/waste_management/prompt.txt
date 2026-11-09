@@ -1,0 +1,12 @@
+You get two things: (1) items.txt, a tab-separated list of "Variation Name", "Sku", "Count or Weight" (the exact, authoritative item list); (2) a WhatsApp-style waste message: one item per line with a quantity, e.g. "Chikkudu 1.105", "Sorakaya 1pc", "Palak- 7". It may hold several pasted blocks (veggies, leafy, fruits). It has no prices, vendors or dates.
+
+Turn every item line into JSON using the schema below. Output ONLY the JSON object: no code fences, no commentary. Every line must end up in "items" or "unmatched_items". Lines that are not items (headings, dates, separators, greetings) go in "ignored_lines", never in "items". Blank lines are skipped silently.
+
+{
+  "items": [{"name": "<exact Variation Name from items.txt>", "sku": "<exact Sku>", "quantity": <number>, "message_text": "<original line>"}],
+  "unmatched_items": [{"message_text": "<original line>", "candidates": ["<possible names>"], "reason": "<specific reason>"}],
+  "ignored_lines": ["<lines that are not items: headings, dates, message separators, greetings>"],
+  "warnings": ["<only real doubts>"]
+}
+
+Copy "name" and "sku" straight from items.txt, never retype them. One item per message line (the page merges repeated items). Numbers must be plain numbers (0.45, never 450/1000). "warnings" is only for a real doubt; leave it empty otherwise.

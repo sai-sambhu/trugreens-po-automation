@@ -4,7 +4,7 @@ if [ ! -d .git ]; then
   echo "This folder is not a git clone, so it can't be updated this way."
   echo "Re-download it from https://github.com/sai-sambhu/trugreens-po-automation"
 else
-  git pull --ff-only origin main && echo && echo "Up to date. Reload convert.html in your browser." \
+  git pull --ff-only origin main && echo && echo "Up to date. Reload index.html in your browser." \
     || { echo; echo "Update failed. If you edited tracked files here, run: git stash   then run this again."; }
 fi
 echo

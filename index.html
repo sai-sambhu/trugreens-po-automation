@@ -15,12 +15,13 @@
       <img class="logoimg" src="assets/img/logo.png" alt="TruGreens: responsible farming" width="96" height="96">
       <div>
         <h1>TruGreens Desk</h1>
-        <p class="sub">Purchase orders and stock reports in one place.</p>
+        <p class="sub">Your daily TruGreens operations tools, in one place.</p>
       </div>
     </div>
     <nav class="seg views" id="views" aria-label="Choose a tool">
       <label><input type="radio" name="view" value="po" checked><span>Purchase Order Converter</span></label>
       <label><input type="radio" name="view" value="report"><span>Stock Report</span></label>
+      <label><input type="radio" name="view" value="waste"><span>Waste Management</span></label>
     </nav>
     <details class="gear" id="gear">
       <summary title="Computer tools" aria-label="Computer tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></summary>
@@ -105,7 +106,7 @@
   </section>
 
   <section id="next" class="card hidden">
-    <div class="card-head"><span class="step">3</span><h2>Run Selenium</h2></div>
+    <div class="card-head"><span class="step">3</span><h2>Create in PosBytz</h2></div>
     <div id="go" class="go">
       <div id="goMark" class="mark"></div>
       <div>
@@ -115,15 +116,15 @@
     </div>
     <div id="goActions" class="runpanel">
       <div class="runmain">
-        <a id="runLink" class="btn primary big hidden" href="trugreens://run" title="Runs run_selenium">
+        <a id="runLink" class="btn primary big hidden" href="trugreens://purchase_order" title="Runs selenium_create_purchase_order">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
-          Run Selenium
+          Create purchase order
         </a>
         <p class="runnote muted">Chrome opens, logs in to PosBytz and fills the purchase order. Review it before saving.</p>
       </div>
       <details id="manualRun" class="manual">
         <summary>Run it by hand instead</summary>
-        <p class="muted">Double-click <b>run_selenium</b> in the <code>commands</code> folder for your system, or paste this in a terminal:</p>
+        <p class="muted">Double-click <b>selenium_create_purchase_order</b> in the <code>commands</code> folder for your system, or paste this in a terminal:</p>
         <div class="cmdbox"><code id="runCmd"></code><button id="copyBtn" class="small" type="button">Copy</button></div>
       </details>
     </div>
@@ -178,6 +179,71 @@
       <div id="reportTable2" class="tablewrap hidden"></div>
     </section>
   </div>
+  <div id="viewWaste" class="hidden">
+    <div class="toolhead">
+      <div>
+        <h2 class="tooltitle">Waste Management</h2>
+        <p class="sub">Paste the waste list (fruits and veggies). It is converted and checked, then saved for Selenium to enter in PosBytz.</p>
+      </div>
+      <div class="folder">
+        <span class="dot" id="wFolderDot"></span>
+        <span id="wFolderPill" class="pill idle">not connected</span>
+        <button id="wFolderBtn" class="small" type="button">Choose folder</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-head"><span class="step">1</span><h2>Waste list</h2></div>
+      <div class="field">
+        <span class="lbl">Message</span>
+        <textarea id="wMessage" placeholder="Chikkudu - 1.105&#10;Sorakaya - 1 pc&#10;All brinjals - 4.135&#10;Kothimeer - 5"></textarea>
+        <div class="tip">One item per line with its quantity. Several lists (veggies, leafy, fruits) can be pasted together.</div>
+      </div>
+      <div class="modelrow">
+        <span class="lbl">Model</span>
+        <div class="dropdown">
+          <select id="wModelSel" aria-label="Model">
+            <option value="strong">GPT-4.1 (default)</option>
+            <option value="mini">GPT-4.1 mini</option>
+          </select>
+        </div>
+        <span class="modelhint">Waste lists are short, so even a convert on GPT-4.1 costs well under a cent.</span>
+      </div>
+      <div class="actions">
+        <button id="wConvertBtn" class="primary big" disabled>Convert &amp; validate</button>
+        <span id="wSpin" class="spin hidden" role="status" aria-label="Working"></span>
+        <span id="wStatus"></span>
+      </div>
+      <details id="wLogWrap" class="hidden"><summary>Log</summary><pre id="wLog"></pre></details>
+    </section>
+
+    <section id="wResult" class="card hidden">
+      <div class="card-head"><span class="step">2</span><h2>Result</h2></div>
+      <div id="wBanner" class="banner"></div>
+      <ul id="wIssues" class="issues"></ul>
+      <div id="wSummary" class="tablewrap"></div>
+      <details><summary>Raw JSON</summary><pre id="wRaw"></pre></details>
+    </section>
+
+    <section id="wNext" class="card hidden">
+      <div class="card-head"><span class="step">3</span><h2>Create in PosBytz</h2></div>
+      <div class="runpanel">
+        <div class="runmain">
+          <a id="wRunLink" class="btn primary big hidden" href="trugreens://waste_entry" title="Runs selenium_create_waste_entry">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+            Create waste entry
+          </a>
+          <p class="runnote muted">Chrome opens, logs in to PosBytz and fills the waste entry (Wastage Location Trugreens, Approver Kanchana, then every item with reason damage). Check it, then save it yourself.</p>
+        </div>
+        <details id="wManual" class="manual">
+          <summary>Run it by hand instead</summary>
+          <p class="muted">Double-click <b>selenium_create_waste_entry</b> in the <code>commands</code> folder for your system, or paste this in a terminal:</p>
+          <div class="cmdbox"><code id="wRunCmd"></code><button id="wCopyBtn" class="small" type="button">Copy</button></div>
+        </details>
+      </div>
+    </section>
+  </div>
+
   <p id="versionNote" class="vernote"></p>
 </main>
 
@@ -195,5 +261,6 @@
 <script src="assets/js/app.js"></script>
 <script src="assets/js/report.js"></script>
 <script src="assets/js/tools.js"></script>
+<script src="assets/js/waste.js"></script>
 </body>
 </html>

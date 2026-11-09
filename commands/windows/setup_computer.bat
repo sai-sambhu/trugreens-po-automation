@@ -108,7 +108,7 @@ reg add "HKCU\Software\Classes\trugreens\shell\open\command" /ve /d "\"%SELF%\" 
 if errorlevel 1 goto linkfail
 > "%ROOT%\.link_registered" echo %ROOT%
 >> "%ROOT%\.link_registered" echo v3
-echo [ OK ]   Page buttons registered ^(Update code, Check health, Run Selenium^)
+echo [ OK ]   Page buttons registered ^(Update code, Check health, Create purchase order, Create waste entry^)
 goto linkdone
 :linkfail
 echo [WARN]   Page buttons could not be registered here ^(your organisation may block it^). The files in commands still work.
@@ -164,7 +164,7 @@ if "%FAIL%"=="0" goto allgood
 echo Fix the items above, then click "Check computer health" again.
 goto end
 :allgood
-echo All good. Open convert.html to start.
+echo All good. Open index.html to start.
 :end
 echo.
 pause

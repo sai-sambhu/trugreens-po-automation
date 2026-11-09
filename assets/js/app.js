@@ -1,15 +1,15 @@
 const ENV_FILE = [".env"];
-// One entry per tab. Item lists are in prompts/items/ and prompt rules in prompts/rules/. The prompt sent to the AI is the rules files joined in order.
+// One entry per tab. Item lists are in prompts/items/ and purchase-order prompt rules in prompts/purchase_orders/. The prompt sent to the AI is the rules files joined in order.
 //   list:    the item list for this tab
 //   rules:   prompt files (shared core + the rules for this kind of list)
 //   vendor:  fixed vendor for the whole tab (omit when the vendor is read from the message)
 //   pcOnly:  the list has no Count/Weight column and every item is pieces
 //   checkTotal: the invoice line Amounts already include tax, so they must add up to the invoice total (blocks a misread row)
 const TABS = {
-  fruits:     { label: "Fruits",          list: "fruits.txt",         rules: ["core.txt", "produce_common.txt", "fruits.txt"] },
-  veggies:    { label: "Veggies & leafy", list: "veggies_leafy.txt",  rules: ["core.txt", "produce_common.txt", "veggies.txt"] },
-  victory:    { label: "Victory",         list: "victory.txt",        rules: ["core.txt", "victory.txt"],    vendor: "Victory",    pcOnly: true },
-  aashirwaad: { label: "Aashirwaad",      list: "aashirwaad.txt",     rules: ["core.txt", "aashirwaad.txt"], vendor: "Aashirwaad", pcOnly: true, checkTotal: true },
+  fruits:     { label: "Fruits",          list: "fruits.txt",         rules: ["core.txt", "produce_common.txt", "fruits_rules.txt"] },
+  veggies:    { label: "Veggies & leafy", list: "veggies_leafy.txt",  rules: ["core.txt", "produce_common.txt", "veggies_rules.txt"] },
+  victory:    { label: "Victory",         list: "victory.txt",        rules: ["core.txt", "victory_rules.txt"],    vendor: "Victory",    pcOnly: true },
+  aashirwaad: { label: "Aashirwaad",      list: "aashirwaad.txt",     rules: ["core.txt", "aashirwaad_rules.txt"], vendor: "Aashirwaad", pcOnly: true, checkTotal: true },
 };
 const DEFAULT_TAB = "veggies";
 const AUTO_MAX_ROWS = 20; // Auto: at most this many lines of text still counts as short
@@ -422,7 +422,7 @@ function showNext(ready) {
   $("goMark").textContent = ready ? "\u2713" : "\u2715";
   $("goTitle").textContent = ready ? "Ready: proceed to Selenium" : "Not ready: do not run Selenium";
   $("goText").textContent = ready
-    ? "purchase_orders.json is saved. Double-click " + (isWin ? "run_selenium.bat" : "run_selenium.command") +
+    ? "purchase_orders.json is saved. Double-click " + (isWin ? "selenium_create_purchase_order.bat" : "selenium_create_purchase_order.command") +
       " in commands/" + (isWin ? "windows" : "mac") + ", or paste the command below."
     : "Fix the issues above and convert again. Nothing was saved, so Selenium would use an older purchase_orders.json.";
   $("goActions").classList.toggle("hidden", !ready);
@@ -464,8 +464,8 @@ function render(orders, issues, saved) {
 /* ---------- run command ---------- */
 const pageDir = decodeURIComponent(location.pathname).replace(/\/[^/]*$/, "");
 const runCommand = isWin
-  ? '"' + pageDir.replace(/^\//, "").replace(/\//g, "\\") + '\\commands\\windows\\run_selenium.bat"'
-  : 'bash "' + pageDir + '/commands/mac/run_selenium.command"';
+  ? '"' + pageDir.replace(/^\//, "").replace(/\//g, "\\") + '\\commands\\windows\\selenium_create_purchase_order.bat"'
+  : 'bash "' + pageDir + '/commands/mac/selenium_create_purchase_order.command"';
 $("runCmd").textContent = runCommand;
 $("copyBtn").addEventListener("click", async () => {
   try {
@@ -697,7 +697,7 @@ $("convertBtn").addEventListener("click", async () => {
     const env = parseEnv(await readText(ENV_FILE));
     const apiKey = env.OPENAI_API_KEY;
     if (!apiKey) throw new Error("OPENAI_API_KEY not found in .env");
-    const systemPrompt = (await Promise.all(tab.rules.map((f) => readText(["prompts", "rules", f])))).join("\n\n");
+    const systemPrompt = (await Promise.all(tab.rules.map((f) => readText(["prompts", "purchase_orders", f])))).join("\n\n");
     const itemTexts = await Promise.all(lists.map(readText));
     // one header, then every selected list's rows
     const itemsText = [itemTexts[0].split(/\r?\n/)[0]]

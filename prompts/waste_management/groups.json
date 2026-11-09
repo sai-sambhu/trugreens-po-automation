@@ -1,0 +1,16 @@
+{
+  "ALL_BRINJALS": {
+    "label": "All brinjals",
+    "split": "equal",
+    "decimals": 3,
+    "skus": ["1245544", "12", "13", "11", "9", "10"],
+    "note": "Sara, Purple, Natu, Long, Black, Green. The two Barta items (14, 15) are separate products and are not included."
+  },
+  "RAW_BANANA": {
+    "label": "Raw Banana (no size)",
+    "split": "equal_first_gets_extra",
+    "decimals": 0,
+    "skus": ["1564", "53"],
+    "note": "Big (1564) first, Small (53) second. Half each, Big gets the extra piece: 3 pc -> Big 2 + Small 1, like the purchase order rule."
+  }
+}
