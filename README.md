@@ -104,7 +104,7 @@ Editing the prompt or item lists takes effect on the next convert, with no code 
 The page checks GitHub when it opens. If this copy is older, an amber bar at the top says so; the version is also shown at the bottom of the page. The bar needs internet and does not update anything by itself.
 
 
-Run `commands/mac/update_code.command` or `commands/windows/update_code.bat`, or `git pull` in the project folder. Your `.env` is not touched. If the pull fails because you edited tracked files locally, run `git stash` and try again.
+Run `commands/mac/update_code.command` or `commands/windows/update_code.bat`, or `git pull` in the project folder. Your `.env` is not touched. It never stops on an error: if the normal update cannot run (a deleted or moved folder, files edited here), your edits to repo files are saved in `backup/` and the folder is refreshed to match GitHub.
 
 ## Buttons that start the commands (optional, one-time setup)
 

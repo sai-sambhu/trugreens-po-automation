@@ -97,14 +97,17 @@ function checkWaste(result, message, catalog, groups) {
     }
     const prev = merged.get(r.sku);
     if (prev) {
-      warn(c.name, c.name + " appears more than once: " + prev.quantity + " + " + r.quantity + " = " + Math.round((prev.quantity + r.quantity) * 1000) / 1000 + " " + c.unit + ".");
+      prev.parts.push(r.quantity);
       prev.quantity = Math.round((prev.quantity + r.quantity) * 1000) / 1000;
       prev.message_text += " + " + r.message_text;
-    } else merged.set(r.sku, { name: c.name, sku: r.sku, quantity: Math.round(r.quantity * 1000) / 1000, unit: c.unit, message_text: r.message_text });
+    } else merged.set(r.sku, { name: c.name, sku: r.sku, quantity: Math.round(r.quantity * 1000) / 1000, unit: c.unit, message_text: r.message_text, parts: [r.quantity] });
   }
+  // One note per repeated item: "Papaya was given 3 times: 1.08 + 0.815 + 1.736 = 3.631 kg."
+  for (const m of merged.values())
+    if (m.parts.length > 1) warn(m.name, m.name + " was given " + m.parts.length + " times: " + m.parts.join(" + ") + " = " + m.quantity + " " + m.unit + ".");
 
   for (const u of result.unmatched_items || [])
-    bad(u.message_text || "(line)", "Not matched: " + (u.reason || "no reason given") + (u.candidates && u.candidates.length ? " (could be: " + u.candidates.join(", ") + ")" : ""));
+    bad(u.message_text || "(line)", "Not matched: " + (u.reason || "the AI gave no reason; check the spelling of the line") + (u.candidates && u.candidates.length ? " (could be: " + u.candidates.join(", ") + ")" : ""));
   for (const w of result.warnings || []) if (String(w).trim()) warn("Note", String(w));
 
   // Every line with a number must be covered by an item or an unmatched line, so nothing is dropped silently.
@@ -192,7 +195,7 @@ $("wConvertBtn").addEventListener("click", async () => {
     const choice = await callOpenAI(env.OPENAI_API_KEY, model, [
       { role: "system", content: prompt + "\n\n" + rules },
       { role: "user", content: "items.txt:\n" + itemsText + "\n\nWaste message:\n" + message + "\n\nOutput only the JSON object." },
-    ]);
+    ], { temperature: 0 });   // the same message should always give the same answer
     if (choice.finish_reason === "length") throw new Error("Model output was cut off, so the JSON would be partial. Convert fewer lines at a time.");
     const result = parseJsonArray(choice.message.content)[0] || {};
 

@@ -172,11 +172,11 @@ function loadCatalog(itemsText) {
 }
 
 /* ---------- OpenAI ---------- */
-async function callOpenAI(apiKey, model, messages) {
+async function callOpenAI(apiKey, model, messages, extra = {}) {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { Authorization: "Bearer " + apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ model, messages }),
+    body: JSON.stringify({ model, messages, ...extra }),
   });
   const body = await res.text();
   if (!res.ok) {
