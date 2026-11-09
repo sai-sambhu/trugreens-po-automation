@@ -166,7 +166,3 @@ The **Waste Management** tab turns a pasted waste list (fruits and veggies, one 
 
 - Prompts live in `prompts/waste_management/`: `prompt.txt` (task and output format), `rules.txt` (matching and unit rules), `groups.json` (lines like "All brinjals" or "Raw banana" with no size: the page splits the total across the group's items, so the maths is exact). The item lists come from the common `prompts/items/` folder (fruits and veggies only).
 - `commands/.../selenium_create_waste_entry` (or the **Create waste entry** button on that tab) runs `src/create_waste_entry.py`. It logs in, opens Stock Adjust, creates a waste entry, sets Wastage Location (Trugreens) and Approver (Kanchana), then adds every item (SKU, quantity, reason "damage"). It does not save the entry: Chrome stays open so you can check it and save it yourself. Several waste messages can be pasted together: the same item in more than one message is added up by the page, with a note.
-
-## Troubleshooting
-
-- **Windows says "An Application Control policy has blocked this file" when Selenium starts:** Windows (Smart App Control) is blocking Chrome's helper program. The scripts then try Microsoft Edge automatically. If that is blocked too, open Windows Security > App & browser control > Smart App Control settings and turn it off (Microsoft treats this as a one-way switch), or ask your administrator to allow the browser driver.

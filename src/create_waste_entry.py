@@ -6,6 +6,8 @@ import os
 import re
 import time
 
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -92,7 +94,7 @@ def main():
     location = data.get("location", "Trugreens")
     approver = data.get("approver", "Kanchana")
 
-    driver = po.start_browser()
+    driver = webdriver.Chrome(options=Options())
     po.DRIVER = driver
     driver.get(po.LOGIN_URL)
     wait = WebDriverWait(driver, 15, ignored_exceptions=[NoSuchElementException, StaleElementReferenceException])
