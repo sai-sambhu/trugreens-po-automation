@@ -200,16 +200,33 @@ def click_item_result(driver, sku, timeout=20):
         time.sleep(0.3)
 
 
+def start_browser():
+    """Start Chrome. If Windows (Smart App Control / an application control policy) or anything else stops Chrome's helper
+    program from starting, try Microsoft Edge, which is on every Windows PC and has a signed helper program."""
+    options = Options()
+    # options.add_argument("--headless=new")  # uncomment to run without a visible window
+    try:
+        return webdriver.Chrome(options=options)
+    except Exception as chrome_error:
+        print(f"Chrome could not be started by Selenium ({type(chrome_error).__name__}: {str(chrome_error).strip()[:160]})")
+        print("Trying Microsoft Edge instead...")
+        try:
+            from selenium.webdriver.edge.options import Options as EdgeOptions
+            return webdriver.Edge(options=EdgeOptions())
+        except Exception as edge_error:
+            print(f"Edge could not be started either ({type(edge_error).__name__}: {str(edge_error).strip()[:160]})")
+            print("If Windows says an application control policy blocked a file: open Windows Security > App & browser control >")
+            print("Smart App Control settings, and turn it Off (or ask the computer's administrator to allow the browser driver).")
+            raise chrome_error
+
+
 def main():
     with open(PURCHASE_ORDERS_JSON_PATH) as f:
         data = json.load(f)
     purchase_order = data[0] if isinstance(data, list) else data
     vendor_search_term = purchase_order["vendor"]
 
-    options = Options()
-    # options.add_argument("--headless=new")  # uncomment to run without a visible window
-
-    driver = webdriver.Chrome(options=options)
+    driver = start_browser()
     global DRIVER
     DRIVER = driver
     driver.get(LOGIN_URL)
