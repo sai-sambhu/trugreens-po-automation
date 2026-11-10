@@ -12,6 +12,8 @@ MATCHING: match each line to one exact list item by spelling and meaning (Telugu
 - Methi / Menthi: line has "big" -> "Methi / Menthi - Big"; "small methi" -> "Microgreens Methi"; plain Methi/Menthi with no size -> "Methi / Menthi - Small".
 - Fruits: Malta / Malta orange -> "Imported Oranges / Malta"; Dragon with no colour -> unmatched (candidates Red / White Dragon Fruit); Local orange -> "Local Orange"; Mandarin -> "Mandarin Orange"; Apple bear -> "Apple bear"; Pomogranate -> "Pomogranate"; Persimmon -> "Persimmon 1 Pc"; Thai guava -> "Thai Guava". A fruit not in the list (e.g. Star fruit) -> unmatched.
 
+GARLIC: "Garlic" with no word "peeled" (also peel, pealed) in the line -> "Garlic"; only a line that says peeled -> "Garlic Peeled".
+
 BRINJALS: the word "Barta" (also Bharta/Bartha) must be in the line for any Barta item; Barta alone -> "Brinjal Barta Purple / Purple Eggplant", with "white" -> "Brinjal Barta White". Purple / Sara / Long / Green / Black / Natu brinjal -> that item. "All brinjals" (no kind named) is a GROUP, see below.
 
 GROUPS (the page splits these, so do not split them yourself). A group line is a normal entry in "items", NEVER in "unmatched_items". Example: {"name": "ALL_BRINJALS", "sku": "GROUP:ALL_BRINJALS", "quantity": 4.135, "message_text": "All brinjals 4.135"}. a line that gives one amount for a whole group becomes ONE item with "sku": "GROUP:<CODE>", "name": "<CODE>" and the amount as "quantity":
