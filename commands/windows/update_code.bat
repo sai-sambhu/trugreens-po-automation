@@ -16,6 +16,8 @@ if not exist .git\index.lock goto nolock
 tasklist /fi "imagename eq git.exe" 2>nul | find /i "git.exe" >nul
 if errorlevel 1 del /f /q .git\index.lock >nul 2>nul
 :nolock
+set OLD=
+for /f %%h in ('git rev-parse HEAD 2^>nul') do set OLD=%%h
 echo Checking GitHub...
 git fetch --quiet origin main >nul 2>nul
 if errorlevel 1 goto offline
@@ -43,14 +45,28 @@ if errorlevel 1 goto lockfail
 goto tidy
 
 :updated
-echo Updated.
 
 :tidy
 rem tidy up: junk files, then folders left empty by deleted or moved folders
 del /s /q /f .DS_Store Thumbs.db >nul 2>nul
 for /l %%i in (1,1,3) do for /f "delims=" %%d in ('dir /ad /b /s 2^>nul ^| findstr /v /i /c:"\.git" ^| sort /r') do rd "%%d" >nul 2>nul
+set NEW=
+for /f %%h in ('git rev-parse HEAD 2^>nul') do set NEW=%%h
 echo.
-echo Up to date. Reload index.html in your browser.
+if not defined OLD goto nochange
+if "%OLD%"=="%NEW%" goto nochange
+echo What changed:
+git log --format="  - %%s" -15 %OLD%..%NEW%
+echo.
+echo Files (M changed, A added, D deleted, R moved):
+git diff --name-status -M %OLD% %NEW%
+goto changeddone
+:nochange
+echo No changes made. This folder is already up to date with GitHub.
+goto end
+:changeddone
+echo.
+echo Updated. Reload index.html in your browser.
 goto end
 
 :nogit

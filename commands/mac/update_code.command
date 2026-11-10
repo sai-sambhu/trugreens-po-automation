@@ -12,13 +12,14 @@ main() {
   # a leftover lock from an interrupted git run
   if [ -f .git/index.lock ] && ! pgrep -x git >/dev/null 2>&1; then rm -f .git/index.lock; fi
 
+  OLD="$(git rev-parse HEAD 2>/dev/null)"
   echo "Checking GitHub..."
   if ! git fetch --quiet origin main 2>/dev/null; then
     echo "Could not reach GitHub. Check the internet connection and try again."
     return 1
   fi
   if git pull --ff-only --quiet origin main >/dev/null 2>&1; then
-    echo "Updated."
+    :   # the summary below says what happened
   else
     echo "The normal update could not run, so the folder is being refreshed to match GitHub..."
     TS="$(date +%Y%m%d-%H%M%S)"
@@ -41,9 +42,25 @@ main() {
   find . -path ./.git -prune -o -type f \( -name .DS_Store -o -name Thumbs.db \) -print -delete >/dev/null 2>&1
   for _ in 1 2 3; do find . -path ./.git -prune -o -mindepth 1 -type d -empty -print -delete >/dev/null 2>&1; done
 
+  # what changed since before the update
+  NEW="$(git rev-parse HEAD 2>/dev/null)"
   VER="$(sed -n 's/.*APP_RELEASE = "\(.*\)".*/\1/p' assets/js/version.js 2>/dev/null)"
   echo
-  echo "Up to date${VER:+ (version $VER)}. Reload index.html in your browser."
+  if [ -z "$OLD" ] || [ "$OLD" = "$NEW" ]; then
+    echo "No changes made. This folder is already up to date with GitHub${VER:+ (version $VER)}."
+    return 0
+  else
+    echo "What changed:"
+    git log --format='  - %s' "$OLD..$NEW" 2>/dev/null | head -15
+    echo
+    echo "Files (M changed, A added, D deleted, R moved):"
+    git diff --name-status -M "$OLD" "$NEW" 2>/dev/null | head -40 | sed 's/^/  /'
+    TOTAL="$(git diff --name-only -M "$OLD" "$NEW" 2>/dev/null | wc -l | tr -d ' ')"
+    [ "${TOTAL:-0}" -gt 40 ] && echo "  ...and $((TOTAL - 40)) more"
+  fi
+
+  echo
+  echo "Updated${VER:+ to version $VER}. Reload index.html in your browser."
   return 0
 }
 # one line on purpose: bash has read all of it before the update replaces this very file
