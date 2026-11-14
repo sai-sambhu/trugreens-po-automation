@@ -62,6 +62,8 @@ Amla / Usiri	55	Weight
 Red Chilli / Pandu Mirchi	7	Weight
 Garlic	23	Weight
 Capsicum	64	Weight
+Red Capsicum	65	Weight
+Yellow Capsicum	66	Weight
 Cabbage 	27	Weight
 Local Keera / Local Cucumber	41	Weight
 Kakarakaya / Bitter Gourd	31	Weight
