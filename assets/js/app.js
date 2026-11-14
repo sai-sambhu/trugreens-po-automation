@@ -283,8 +283,10 @@ function validate(orders, catalog, defaultUnit, overrides, rowCheck) {
           }
         }
         // Rate per unit = line total / quantity, worked out here (the model's division is not trusted).
-        if (Number(it.quantity) > 0 && it.line_total != null)
+        if (Number(it.quantity) > 0 && it.line_total != null && it.line_total !== "" && Number.isFinite(Number(it.line_total)))
           it.buying_price_per_unit = Math.round((Number(it.line_total) / Number(it.quantity)) * 100) / 100;
+        else
+          bad(label, entry.name + ": no amount (price) or no quantity was found for this line, so the rate cannot be worked out and Selenium could not enter it. Add the amount to the line (for example 'Garlic-8kg-1600rs') and convert again.");
         const expected = entry.unit || defaultUnit;
         if (expected && it.unit !== expected)
           bad(label, "Unit for " + entry.name + " (SKU " + sku + ") must be " + expected + " but the model gave " + it.unit + ".");

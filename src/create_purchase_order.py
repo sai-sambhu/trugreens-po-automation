@@ -286,6 +286,8 @@ def main():
     safe_click(driver, add_multiple_items_tab)
 
     for index, item in enumerate(reversed(purchase_order["items"])):
+        if "buying_price_per_unit" not in item:
+            raise RuntimeError(f"'{item.get('name', item.get('sku'))}' has no price in purchase_orders.json. Add the amount to that line in the message and convert again.")
         buying_price = item["buying_price_per_unit"]
 
         if index == 0:

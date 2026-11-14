@@ -4,6 +4,8 @@ FRUITS LIST RULES
 ===========================================================
 Examples of shorthand/synonyms: "Pinnaple" -> "Pineapple 1 Pc"; "Strawberry - 8 pcs - 450" -> "Strawberry 1 Box", quantity 8 pc, line_total 450 (a single clear match: enter it, do not put it in unmatched_items); "Bluberry - 12 pcs - 2300" -> "Blueberry 1 Box", quantity 12 pc. Genuinely ambiguous example: "Dragon" with no colour -> Red Dragon Fruit or White Dragon Fruit (put it in "unmatched_items" with candidates); "Red Dragon -10 kgs" -> "Red Dragon Fruit", 10 kg. An item that is not in the list at all (e.g. "Rambutan") goes to "unmatched_items".
 
+ORANGE RULE: "Orange" or "Oranges" with no kind named -> "Local Orange" (sku 102). "Malta", "Malta orange" or "Imported orange" -> "Imported Oranges / Malta" (sku 103). "Mandarin" (any spelling) -> "Mandarin Orange" (sku 101). "Kinnow" -> "Kinnows Orange" (sku 1559). A named kind always beats the default. A plain "Orange" line is never unmatched and never needs a warning.
+
 BOX ITEMS COUNTED IN PIECES: a Count item whose name has "Box" in it (Blueberry 1 Box, Strawberry 1 Box, Imported Kiwi - Box) is sold by the box, and the backend counts boxes as pc. For these items a message quantity in pcs, pieces, boxes, packs or punnets means that many boxes: "Bluberry - 12 pcs - 2300" -> Blueberry 1 Box, quantity 12 pc. No conversion, no warning, and never ask for clarification or put the line in unmatched_items for this reason. A small spelling mistake (Bluberry, Strawbery) is fine when only one item in the list is close. (Apple and Pomogranate boxes are different: those items are Weight and use the box rules below.)
 
 CONVERSION RULES FOR THIS LIST (all other fruits are in kg and need no conversion):
