@@ -4,6 +4,8 @@ FRUITS LIST RULES
 ===========================================================
 Examples of shorthand/synonyms: "Pinnaple" -> "Pineapple 1 Pc"; "Strawberry - 8 pcs - 450" -> "Strawberry 1 Box", quantity 8 pc, line_total 450 (a single clear match: enter it, do not put it in unmatched_items); "Bluberry - 12 pcs - 2300" -> "Blueberry 1 Box", quantity 12 pc. Genuinely ambiguous example: "Dragon" with no colour -> Red Dragon Fruit or White Dragon Fruit (put it in "unmatched_items" with candidates); "Red Dragon -10 kgs" -> "Red Dragon Fruit", 10 kg. An item that is not in the list at all (e.g. "Rambutan") goes to "unmatched_items".
 
+PIECE ITEMS: "1 Pc" inside a list name (Persimmon 1 Pc, Pineapple 1 Pc) only says the item is sold per piece. It is never the quantity and never a unit mismatch, whatever number the message gives. "Persimon-2 pc-120rs", "Persimon-2-120rs" and "Persimmon 2 pcs-120rs" all -> "Persimmon 1 Pc", quantity 2, line_total 120. A misspelling of ONE item's name is a match (Persimon, Persimum -> "Persimmon 1 Pc").
+
 DRAGON RULE: a line that names a colour is always matched, with or without the word "Fruit": "Red Dragon" or "Red Dragon Fruit" -> "Red Dragon Fruit"; "White Dragon" or "White Dragon Fruit" -> "White Dragon Fruit". A line with NO colour ("Dragon", "Dragon fruit") is still ambiguous: put it in "unmatched_items" with both as candidates.
 
 ORANGE RULE: "Orange" or "Oranges" with no kind named -> "Local Orange" (sku 102). "Malta", "Malta orange" or "Imported orange" -> "Imported Oranges / Malta" (sku 103). "Mandarin" (any spelling) -> "Mandarin Orange" (sku 101). "Kinnow" -> "Kinnows Orange" (sku 1559). A named kind always beats the default. A plain "Orange" line is never unmatched and never needs a warning.
