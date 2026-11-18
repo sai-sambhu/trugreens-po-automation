@@ -57,7 +57,7 @@ function splitGroup(code, qty, groups) {
 
 /* ---------- validation of the AI answer ---------- */
 const normText = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9.]/g, "");
-const HAS_PC = /\d\s*(pcs?|pieces?)\b/i;
+const HAS_PC = /\d\s*(pcs?|pieces?|bunch(?:es)?)\b/i;   // bunches are counted like pieces
 const HAS_KG = /\d\s*(kgs?|kilos?|gms?|grams?|g)\b/i;
 
 function checkWaste(result, message, catalog, groups) {

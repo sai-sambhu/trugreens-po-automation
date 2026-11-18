@@ -102,7 +102,7 @@ Methi / Menthi - Big	1563	Count
 Aava Kura / Mustard Leaf - Medium	1562	Count
 Aava Kura / Mustard Leaf - Big	1561	Count
 Bathua	1560	Count
-Spinach / Palakura	95	Count
+Spinach / Palakura	95	Weight
 Soy Koora / Dil Leaf	183	Count
 Chintachiguru 1 Kg	99	Weight
 Drumstick Leaf / Moringa / Munagaku 1 Pc	84	Count
